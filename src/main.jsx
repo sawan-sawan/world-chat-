@@ -1,6 +1,3 @@
-Ye **`App.jsx` pura replace** kar do:
-
-```jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
@@ -452,6 +449,3 @@ function mergePresence(current, onlineUsers) {
 }
 
 createRoot(document.getElementById("root")).render(<App />);
-```
-
-Iske baad `styles.css` wala code jo maine diya tha paste karo.
