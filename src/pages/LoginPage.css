@@ -1,0 +1,135 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(24, 184, 245, 0.22), transparent 32%),
+    linear-gradient(135deg, #f8fbff, #eaf3ff);
+}
+
+.auth-panel {
+  width: min(460px, 100%);
+  background: #ffffff;
+  border: 1px solid #e4ecf7;
+  border-radius: 28px;
+  padding: 34px;
+  box-shadow: 0 28px 80px rgba(37, 99, 235, 0.16);
+}
+
+.brand-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.hero-brand {
+  align-items: center;
+}
+
+.brand-mark {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  flex: 0 0 auto;
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+}
+
+.brand-row h1 {
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -1.4px;
+  text-transform: lowercase;
+  color: #2563eb;
+}
+
+.brand-row p {
+  margin-top: 7px;
+  color: #66758d;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.join-form {
+  display: grid;
+  gap: 18px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #334155;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.input-action {
+  display: grid;
+  grid-template-columns: 1fr 52px;
+  gap: 10px;
+}
+
+.icon-button {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #dce5f2;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  background: #ffffff;
+}
+
+.input-action .icon-button {
+  width: 52px;
+  height: 56px;
+}
+
+.primary-button {
+  min-height: 56px;
+  border: 0;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #18b8f5, #2563eb);
+  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.28);
+  font-weight: 900;
+}
+
+.feature-strip,
+.color-row {
+  display: none;
+}
+
+@media (max-width: 460px) {
+  .shell {
+    padding: 0;
+    background: linear-gradient(135deg, #18b8f5, #2563eb);
+  }
+
+  .auth-panel {
+    min-height: 100vh;
+    width: 100%;
+    border-radius: 0;
+    display: grid;
+    align-content: center;
+    padding: 28px;
+  }
+
+  .brand-row {
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+  }
+
+  .brand-row h1 {
+    font-size: 46px;
+  }
+}
