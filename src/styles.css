@@ -4,7 +4,43 @@
   background: #eef5ff;
   color: #0f172a;
 }
+.join-animation {
+  align-self: center;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 800;
+  animation: joinFade 3.5s ease forwards;
+  pointer-events: none;
+}
 
+.join-animation span {
+  color: #0f172a;
+}
+
+@keyframes joinFade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  75% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+}
 * {
   box-sizing: border-box;
 }
