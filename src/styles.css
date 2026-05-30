@@ -315,7 +315,6 @@ input:focus {
 
 .room-card {
   display: flex;
-  height: 90px;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
@@ -324,6 +323,7 @@ input:focus {
   color: #0f172a;
   border-radius: 16px;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  height: 91px;
 }
 
 .room-subtitle,
