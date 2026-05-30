@@ -1,3 +1,6 @@
+Ye **`App.jsx` pura replace** kar do:
+
+```jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
@@ -5,13 +8,11 @@ import {
   ArrowRight,
   CheckCheck,
   Copy,
-  LockKeyhole,
   LogOut,
   MessageCircle,
   Send,
-  Signal,
   Sparkles,
-  Smartphone,
+  User,
   Users,
   Wifi,
   WifiOff,
@@ -21,7 +22,8 @@ import "./styles.css";
 const SERVER_URL =
   import.meta.env.VITE_SOCKET_URL ||
   `${window.location.protocol}//${window.location.hostname}:3001`;
-const COLORS = ["#0f766e", "#2563eb", "#7c3aed", "#c2410c", "#be123c", "#047857"];
+
+const COLORS = ["#2563eb", "#18b8f5", "#7c3aed", "#f97316", "#ec4899", "#10b981"];
 
 function randomRoom() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -29,18 +31,21 @@ function randomRoom() {
 
 function savedProfile() {
   try {
-    return JSON.parse(localStorage.getItem("world-chat-profile")) || {};
+    return JSON.parse(localStorage.getItem("talknesty-profile")) || {};
   } catch {
     return {};
   }
 }
 
 function getClientId() {
-  const existingId = localStorage.getItem("world-chat-client-id");
+  const existingId = localStorage.getItem("talknesty-client-id");
   if (existingId) return existingId;
 
-  const nextId = crypto.randomUUID?.() || `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  localStorage.setItem("world-chat-client-id", nextId);
+  const nextId =
+    crypto.randomUUID?.() ||
+    `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  localStorage.setItem("talknesty-client-id", nextId);
   return nextId;
 }
 
@@ -51,13 +56,18 @@ function timeLabel(value) {
   }).format(new Date(value));
 }
 
+function LogoIcon({ size = 28 }) {
+  return <MessageCircle size={size} fill="currentColor" strokeWidth={2.4} />;
+}
+
 function App() {
   const initialProfile = savedProfile();
+
   const [clientId] = useState(() => initialProfile.clientId || getClientId());
   const [showIntro, setShowIntro] = useState(true);
   const [name, setName] = useState(initialProfile.name || "");
   const [roomInput, setRoomInput] = useState(initialProfile.roomId || randomRoom());
-  const [color, setColor] = useState(initialProfile.color || COLORS[0]);
+  const [color] = useState(initialProfile.color || COLORS[0]);
   const [session, setSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
@@ -66,6 +76,7 @@ function App() {
   const [connection, setConnection] = useState("idle");
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [error, setError] = useState("");
+
   const socketRef = useRef(null);
   const listRef = useRef(null);
   const typingTimerRef = useRef(null);
@@ -73,14 +84,16 @@ function App() {
   const roomId = session?.roomId;
   const onlineCount = users.length;
   const currentUserId = session?.clientId || clientId;
+
   const otherContacts = contacts.filter((user) => user.id !== currentUserId);
   const primaryContact = otherContacts[0];
+
   const roomStatus = primaryContact
     ? `${primaryContact.name} is ${primaryContact.status}`
     : `${onlineCount} online in this room`;
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowIntro(false), 1600);
+    const timer = window.setTimeout(() => setShowIntro(false), 1300);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -97,6 +110,7 @@ function App() {
     const socket = io(SERVER_URL, {
       transports: ["websocket", "polling"],
     });
+
     socketRef.current = socket;
     setConnection("connecting");
     setError("");
@@ -107,12 +121,14 @@ function App() {
     });
 
     socket.on("disconnect", () => setConnection("offline"));
+
     socket.on("connect_error", () => {
       setConnection("offline");
       setError("Server se connection nahi ho pa raha. Server URL/deployment check karein.");
     });
 
     socket.on("room:error", setError);
+
     socket.on("room:history", ({ messages: history, users: roomUsers }) => {
       setMessages(history || []);
       setUsers(roomUsers || []);
@@ -127,6 +143,7 @@ function App() {
       setUsers(roomUsers || []);
       setContacts((current) => mergePresence(current, roomUsers || []));
     });
+
     socket.on("typing:update", ({ id, name: typingName, typing }) => {
       setTypingUsers((current) => {
         const next = new Map(current);
@@ -150,22 +167,32 @@ function App() {
 
   function joinRoom(event) {
     event.preventDefault();
+
     const cleanName = name.trim();
     const cleanRoom = roomInput.trim().toUpperCase();
+
     if (!cleanName || !cleanRoom) {
-      setError("Name aur room code dono required hain.");
+      setError("Name aur Room ID dono required hain.");
       return;
     }
 
-    const nextSession = { name: cleanName, roomId: cleanRoom, color, clientId };
-    localStorage.setItem("world-chat-profile", JSON.stringify(nextSession));
+    const nextSession = {
+      name: cleanName,
+      roomId: cleanRoom,
+      color,
+      clientId,
+    };
+
+    localStorage.setItem("talknesty-profile", JSON.stringify(nextSession));
     setSession(nextSession);
   }
 
   function sendMessage(event) {
     event.preventDefault();
+
     const text = draft.trim();
     if (!text) return;
+
     socketRef.current?.emit("message:send", { text });
     socketRef.current?.emit("typing:stop");
     setDraft("");
@@ -173,7 +200,9 @@ function App() {
 
   function updateDraft(value) {
     setDraft(value);
+
     socketRef.current?.emit("typing:start");
+
     window.clearTimeout(typingTimerRef.current);
     typingTimerRef.current = window.setTimeout(() => {
       socketRef.current?.emit("typing:stop");
@@ -181,7 +210,7 @@ function App() {
   }
 
   async function copyInvite() {
-    const text = `Join my World Chat room: ${roomId}`;
+    const text = `Join my Talknesty room: ${roomId}`;
     await navigator.clipboard?.writeText(text);
   }
 
@@ -199,10 +228,10 @@ function App() {
     return (
       <main className="intro-screen">
         <div className="intro-logo">
-          <MessageCircle size={42} />
+          <LogoIcon size={44} />
         </div>
-        <h1>World Chat</h1>
-        <p>Realtime conversations, anywhere.</p>
+        <h1>talknesty</h1>
+        <p>Chat freely. Connect deeply. Be you.</p>
       </main>
     );
   }
@@ -212,66 +241,61 @@ function App() {
       <main className="shell">
         <section className="auth-panel">
           <div className="brand-row hero-brand">
-            <span className="brand-mark"><MessageCircle size={26} /></span>
+            <span className="brand-mark">
+              <LogoIcon size={30} />
+            </span>
+
             <div>
-              <h1>World Chat</h1>
-              <p>Start a private room, share the code, and chat live from any phone.</p>
+              <h1>talknesty</h1>
+              <p>Join a room and start chatting instantly with anyone, anywhere.</p>
             </div>
           </div>
 
           <form className="join-form" onSubmit={joinRoom}>
             <label>
-              Your name
-              <input
-                autoFocus
-                value={name}
-                maxLength={28}
-                placeholder="Name"
-                onChange={(event) => setName(event.target.value)}
-              />
+              Name
+              <div className="input-icon">
+                <User size={20} />
+                <input
+                  autoFocus
+                  value={name}
+                  maxLength={28}
+                  placeholder="Name"
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </div>
             </label>
 
             <label>
-              Room code
+              Room ID
               <div className="input-action">
-                <input
-                  value={roomInput}
-                  maxLength={32}
-                  placeholder="Room Id"
-                  onChange={(event) => setRoomInput(event.target.value.toUpperCase())}
-                />
-                <button type="button" className="icon-button" title="New room code" onClick={() => setRoomInput(randomRoom())}>
+                <div className="input-icon">
+                  <Users size={20} />
+                  <input
+                    value={roomInput}
+                    maxLength={32}
+                    placeholder="Room ID"
+                    onChange={(event) => setRoomInput(event.target.value.toUpperCase())}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="icon-button"
+                  title="New room code"
+                  onClick={() => setRoomInput(randomRoom())}
+                >
                   <ArrowRight size={18} />
                 </button>
               </div>
             </label>
 
-            <div className="color-row" aria-label="Choose profile color">
-              {COLORS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`swatch ${item === color ? "selected" : ""}`}
-                  style={{ background: item }}
-                  title={`Use ${item}`}
-                  onClick={() => setColor(item)}
-                />
-              ))}
-            </div>
-
             {error ? <p className="error">{error}</p> : null}
 
             <button className="primary-button" type="submit">
-              <Smartphone size={18} />
-              Open Chat Room
+              Login
             </button>
           </form>
-
-          <div className="feature-strip">
-            <span><Signal size={16} /> Realtime</span>
-            <span><LockKeyhole size={16} /> Room code</span>
-            <span><Users size={16} /> Presence</span>
-          </div>
         </section>
       </main>
     );
@@ -280,12 +304,20 @@ function App() {
   return (
     <main className="chat-layout">
       <aside className="sidebar">
+        <div className="sidebar-brand">
+          <span className="brand-mark small">
+            <LogoIcon size={24} />
+          </span>
+          <h1>talknesty</h1>
+        </div>
+
         <div className="room-card">
           <div>
             <p className="eyebrow">Room</p>
             <h2>{roomId}</h2>
             <p className="room-subtitle">{onlineCount} online now</p>
           </div>
+
           <button className="icon-button" type="button" title="Copy invite" onClick={copyInvite}>
             <Copy size={18} />
           </button>
@@ -294,16 +326,22 @@ function App() {
         <div className={`status ${connection}`}>
           {connection === "online" ? <Wifi size={17} /> : <WifiOff size={17} />}
           <span />
-          {connection === "online" ? "You are online" : connection === "connecting" ? "Connecting" : "You are offline"}
+          {connection === "online"
+            ? "You are online"
+            : connection === "connecting"
+            ? "Connecting"
+            : "You are offline"}
         </div>
 
         <section className="people">
           <h3>People</h3>
+
           {contacts.map((user) => (
             <div className={`person ${user.status}`} key={user.id}>
               <span className="person-avatar" style={{ background: user.color }}>
                 {user.name.slice(0, 1).toUpperCase()}
               </span>
+
               <div>
                 <p>{user.id === currentUserId ? "You" : user.name}</p>
                 <small>{user.status === "online" ? "Online" : "Offline"}</small>
@@ -314,20 +352,24 @@ function App() {
 
         <button className="secondary-button" type="button" onClick={leaveRoom}>
           <LogOut size={18} />
-          Leave
+          Leave Room
         </button>
       </aside>
 
       <section className="chat-panel">
         <header className="chat-header">
           <div className="chat-title">
-            <span className="chat-mark"><Sparkles size={18} /></span>
+            <span className="chat-mark">
+              <Sparkles size={20} />
+            </span>
+
             <div>
               <p className="eyebrow">Realtime chat</p>
               <h2>{primaryContact?.name || roomId}</h2>
               <p className="chat-subtitle">{roomStatus}</p>
             </div>
           </div>
+
           <div className="delivered">
             <CheckCheck size={18} />
             {connection === "online" ? "Live sync" : "Offline"}
@@ -339,6 +381,7 @@ function App() {
         <div className="messages" ref={listRef}>
           {messages.map((message) => {
             const mine = message.sender.id === currentUserId;
+
             return (
               <article
                 className={`message ${mine ? "mine" : ""} ${message.system ? "system" : ""}`}
@@ -349,6 +392,7 @@ function App() {
                     {message.sender.name.slice(0, 1).toUpperCase()}
                   </div>
                 ) : null}
+
                 <div className="bubble">
                   {!message.system ? (
                     <div className="message-meta">
@@ -356,11 +400,13 @@ function App() {
                       <span>{timeLabel(message.createdAt)}</span>
                     </div>
                   ) : null}
+
                   <p>{message.text}</p>
                 </div>
               </article>
             );
           })}
+
           {typingText ? <p className="typing">{typingText}</p> : null}
         </div>
 
@@ -371,6 +417,7 @@ function App() {
             maxLength={1200}
             onChange={(event) => updateDraft(event.target.value)}
           />
+
           <button className="send-button" type="submit" title="Send message">
             <Send size={20} />
           </button>
@@ -405,3 +452,6 @@ function mergePresence(current, onlineUsers) {
 }
 
 createRoot(document.getElementById("root")).render(<App />);
+```
+
+Iske baad `styles.css` wala code jo maine diya tha paste karo.
