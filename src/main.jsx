@@ -408,7 +408,7 @@ function App() {
   .slice(-1)
   .map((user) => (
     <div className="join-animation" key={`join-${user.id}`}>
-      <span>{user.name}</span> joined the room
+      🎉 <span>{user.name}</span> joined the room
     </div>
   ))}
           {typingText ? <p className="typing">{typingText}</p> : null}
