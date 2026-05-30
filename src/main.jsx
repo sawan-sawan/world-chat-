@@ -415,7 +415,7 @@ const inputRef = useRef(null);
         </div>
 
         <form className="composer" onSubmit={sendMessage}>
-  const inputRef = useRef(null);<input
+<input
   ref={inputRef}
   value={draft}
   placeholder="Message likhein..."
