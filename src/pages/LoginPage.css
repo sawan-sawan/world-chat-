@@ -4,21 +4,28 @@
   place-items: center;
   padding: 28px;
   background:
-    radial-gradient(circle at 20% 20%, rgba(24, 184, 245, 0.22), transparent 32%),
-    linear-gradient(135deg, #f8fbff, #eaf3ff);
+    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 34%),
+    radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--primary-soft) 16%, transparent), transparent 28%),
+    linear-gradient(135deg, var(--app-bg-2), var(--app-bg));
+  color: var(--text);
+  transition: background 180ms ease, color 180ms ease;
 }
 
 .auth-panel {
-  width: min(460px, 100%);
-  background: #ffffff;
-  border: 1px solid #e4ecf7;
+  width: min(480px, 100%);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border: 1px solid var(--border-soft);
   border-radius: 28px;
   padding: 34px;
-  box-shadow: 0 28px 80px rgba(37, 99, 235, 0.16);
+  box-shadow: 0 28px 80px var(--shadow-blue);
+  color: var(--text);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .brand-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   gap: 14px;
   align-items: center;
   margin-bottom: 28px;
@@ -35,7 +42,7 @@
   place-items: center;
   border-radius: 18px;
   flex: 0 0 auto;
-  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+  box-shadow: 0 16px 34px var(--shadow-blue);
 }
 
 .brand-row h1 {
@@ -44,14 +51,18 @@
   font-weight: 900;
   letter-spacing: -1.4px;
   text-transform: lowercase;
-  color: #2563eb;
+  color: var(--primary-text);
 }
 
 .brand-row p {
   margin-top: 7px;
-  color: #66758d;
+  color: var(--muted);
   line-height: 1.45;
   font-weight: 600;
+}
+
+.auth-theme-btn {
+  justify-self: end;
 }
 
 .join-form {
@@ -62,26 +73,32 @@
 label {
   display: grid;
   gap: 8px;
-  color: #334155;
+  color: var(--muted-strong);
   font-weight: 800;
   font-size: 14px;
+}
+
+.input-icon {
+  position: relative;
+}
+
+.input-icon svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.input-icon input {
+  padding-left: 48px;
 }
 
 .input-action {
   display: grid;
   grid-template-columns: 1fr 52px;
   gap: 10px;
-}
-
-.icon-button {
-  width: 48px;
-  height: 48px;
-  border: 1px solid #dce5f2;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  color: #2563eb;
-  background: #ffffff;
 }
 
 .input-action .icon-button {
@@ -99,8 +116,13 @@ label {
   gap: 10px;
   color: #ffffff;
   background: linear-gradient(135deg, #18b8f5, #2563eb);
-  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.28);
+  box-shadow: 0 16px 32px var(--shadow-blue);
   font-weight: 900;
+  transition: transform 160ms ease, box-shadow 180ms ease;
+}
+
+.primary-button:hover {
+  transform: translateY(-1px);
 }
 
 .feature-strip,
@@ -108,28 +130,65 @@ label {
   display: none;
 }
 
+@media (max-width: 560px) {
+  .shell {
+    padding: 16px;
+    align-items: stretch;
+  }
+
+  .auth-panel {
+    width: 100%;
+    align-self: center;
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .brand-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .auth-theme-btn {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
 @media (max-width: 460px) {
   .shell {
     padding: 0;
-    background: linear-gradient(135deg, #18b8f5, #2563eb);
+    background:
+      radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 28%),
+      linear-gradient(135deg, var(--app-bg-2), var(--app-bg));
   }
 
   .auth-panel {
     min-height: 100vh;
     width: 100%;
     border-radius: 0;
+    border-left: 0;
+    border-right: 0;
     display: grid;
     align-content: center;
     padding: 28px;
+    box-shadow: none;
   }
 
   .brand-row {
     justify-content: center;
     text-align: center;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .brand-mark {
+    justify-self: center;
   }
 
   .brand-row h1 {
     font-size: 46px;
+  }
+
+  .input-action {
+    grid-template-columns: 1fr 52px;
   }
 }

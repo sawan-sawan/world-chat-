@@ -140,3 +140,344 @@ input:focus {
     transform: translateY(0) scale(1);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  background: #020617;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] body {
+  background: #020617;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] input {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #334155;
+}
+
+:root[data-theme="dark"] input::placeholder {
+  color: #94a3b8;
+}
+
+:root[data-theme="dark"] .icon-button {
+  background: #0f172a;
+  color: #38bdf8;
+  border-color: #334155;
+}
+
+:root[data-theme="dark"] .error {
+  background: rgba(190, 18, 60, 0.15);
+  color: #fecdd3;
+  border-color: rgba(254, 205, 211, 0.25);
+}
+
+.theme-toggle-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 99999;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 15px;
+  background: linear-gradient(135deg, #18b8f5, #2563eb);
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+}
+
+@media (max-width: 600px) {
+  .theme-toggle-btn {
+    top: 12px;
+    right: 12px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+
+
+
+/* ================================
+   PROFESSIONAL LIGHT / DARK THEME
+================================ */
+
+:root[data-theme="light"] {
+  --app-bg: #eef4ff;
+  --card-bg: #ffffff;
+  --card-soft: #f8fbff;
+  --text-main: #0f172a;
+  --text-soft: #475569;
+  --text-muted: #64748b;
+  --border-soft: #d8e2f0;
+  --bubble-me: #2563eb;
+  --bubble-other: #ffffff;
+  --bubble-other-border: #dbe5f3;
+  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="dark"] {
+  --app-bg: #020617;
+  --card-bg: #0f172a;
+  --card-soft: #111827;
+  --text-main: #f8fafc;
+  --text-soft: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-soft: #263449;
+  --bubble-me: #2563eb;
+  --bubble-other: #111827;
+  --bubble-other-border: #334155;
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+html,
+body,
+#root {
+  background: var(--app-bg);
+  color: var(--text-main);
+}
+
+body {
+  background: var(--app-bg) !important;
+}
+
+/* Main app surfaces */
+.login-page,
+.chat-page,
+.chat-shell,
+.chat-layout,
+.chat-main,
+.chat-area {
+  background: var(--app-bg) !important;
+  color: var(--text-main) !important;
+}
+
+/* Cards / panels */
+.login-card,
+.sidebar,
+.chat-panel,
+.chat-main,
+.chat-header,
+.contacts-panel,
+.composer,
+.message-composer {
+  background: var(--card-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-soft) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Text polish */
+h1,
+h2,
+h3,
+.chat-title,
+.contact-name,
+.message-author,
+.room-title,
+.brand-title {
+  color: var(--text-main) !important;
+}
+
+p,
+span,
+label {
+  color: var(--text-soft);
+}
+
+.subtitle,
+.muted,
+.status,
+.contact-status,
+.message-time,
+.room-status,
+.typing-text {
+  color: var(--text-muted) !important;
+}
+
+/* Inputs */
+input,
+textarea {
+  background: var(--card-soft) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-soft) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Message bubble professional borders */
+.message-bubble,
+.bubble,
+.message-card {
+  border: 1px solid var(--bubble-other-border) !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+/* Other user message */
+.message:not(.own) .message-bubble,
+.message:not(.me) .message-bubble,
+.message-row:not(.own) .message-bubble,
+.message-row:not(.me) .message-bubble {
+  background: var(--bubble-other) !important;
+  color: var(--text-main) !important;
+}
+
+/* My message */
+.message.own .message-bubble,
+.message.me .message-bubble,
+.message-row.own .message-bubble,
+.message-row.me .message-bubble,
+.message-bubble.own,
+.message-bubble.me {
+  background: linear-gradient(135deg, #18b8f5, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.message.own .message-bubble *,
+.message.me .message-bubble *,
+.message-row.own .message-bubble *,
+.message-row.me .message-bubble *,
+.message-bubble.own *,
+.message-bubble.me * {
+  color: #ffffff !important;
+}
+
+/* Contact / user cards */
+.contact-card,
+.user-card,
+.contact-item {
+  background: var(--card-soft) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-soft) !important;
+}
+
+/* Icon buttons */
+.icon-button {
+  background: var(--card-soft) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-soft) !important;
+}
+
+/* Theme button professional */
+.theme-toggle-btn {
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 999px;
+  padding: 9px 14px;
+  background: var(--card-soft) !important;
+  color: var(--text-main) !important;
+  font-weight: 800;
+  box-shadow: none !important;
+}
+
+.theme-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Agar button floating hai to usko clean position do */
+.theme-toggle-floating {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .theme-toggle-floating {
+    top: 12px;
+    right: 12px;
+  }
+
+  .theme-toggle-btn {
+    padding: 8px 11px;
+    font-size: 13px;
+  }
+
+  .message-bubble {
+    max-width: 86%;
+  }
+}
+
+
+
+
+
+
+
+
+
+/* Leave Room Button Fix */
+
+.secondary-button {
+  transition: all 0.25s ease;
+  font-weight: 700;
+}
+
+/* Light Theme */
+:root[data-theme="light"] .secondary-button {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #d8e2f0 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+/* Dark Theme */
+:root[data-theme="dark"] .secondary-button {
+   background: linear-gradient(135deg, #18b8f5, #2563eb) !important;
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+  box-shadow: none !important;
+}
+
+/* Hover */
+:root[data-theme="light"] .secondary-button:hover {
+  background: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .secondary-button:hover {
+  background: #1e293b !important;
+}
+
+
+
+
+
+
+/* User Name Theme Fix */
+
+:root[data-theme="light"] .user-status,
+:root[data-theme="light"] .user-name,
+:root[data-theme="light"] .participant-name {
+  color: #030303 !important;
+}
+
+:root[data-theme="dark"] .contact-name,
+:root[data-theme="dark"] .user-name,
+:root[data-theme="dark"] .participant-name {
+  color: #ffffff !important;
+}

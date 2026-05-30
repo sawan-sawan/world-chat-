@@ -43,6 +43,23 @@ function timeLabel(value) {
   }).format(new Date(value));
 }
 
+function ThemeButton({ theme, onToggleTheme, className = "" }) {
+  return (
+    <button
+      className={`theme-toggle-btn ${className}`.trim()}
+      type="button"
+      onClick={onToggleTheme}
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+      title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+    >
+      <span className="theme-icon" aria-hidden="true">
+        {theme === "dark" ? "☀️" : "🌙"}
+      </span>
+      <span>{theme === "dark" ? "Light" : "Dark"}</span>
+    </button>
+  );
+}
+
 function App() {
   const initialProfile = savedProfile();
   const inputRef = useRef(null);
@@ -59,6 +76,9 @@ function App() {
   const [connection, setConnection] = useState("idle");
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("talknesty-theme") || "light"
+  );
 
   const socketRef = useRef(null);
   const listRef = useRef(null);
@@ -79,6 +99,11 @@ function App() {
     const timer = window.setTimeout(() => setShowIntro(false), 1300);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("talknesty-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -147,6 +172,10 @@ function App() {
     if (!names.length) return "";
     return `${names.join(", ")} typing...`;
   }, [typingUsers]);
+
+  function toggleTheme() {
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
+  }
 
   function joinRoom(event) {
     event.preventDefault();
@@ -225,6 +254,9 @@ function App() {
         error={error}
         name={name}
         roomInput={roomInput}
+        theme={theme}
+        ThemeButton={ThemeButton}
+        onToggleTheme={toggleTheme}
         onGenerateRoom={() => setRoomInput(randomRoom())}
         onNameChange={setName}
         onRoomChange={setRoomInput}
@@ -247,11 +279,14 @@ function App() {
       primaryContact={primaryContact}
       roomId={roomId}
       roomStatus={roomStatus}
+      theme={theme}
+      ThemeButton={ThemeButton}
       typingText={typingText}
       onCopyInvite={copyInvite}
       onDraftChange={updateDraft}
       onLeaveRoom={leaveRoom}
       onSendMessage={sendMessage}
+      onToggleTheme={toggleTheme}
       timeLabel={timeLabel}
     />
   );

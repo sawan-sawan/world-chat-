@@ -24,21 +24,30 @@ export default function ChatPage({
   primaryContact,
   roomId,
   roomStatus,
+  theme,
+  ThemeButton,
   typingText,
   onCopyInvite,
   onDraftChange,
   onLeaveRoom,
   onSendMessage,
+  onToggleTheme,
   timeLabel,
 }) {
   return (
     <main className="chat-layout">
       <aside className="sidebar">
-        <div className="sidebar-brand">
-          <span className="brand-mark small">
-            <LogoIcon size={24} />
-          </span>
-          <h1>talknesty</h1>
+        <div className="sidebar-topbar">
+          <div className="sidebar-brand">
+            <span className="brand-mark small">
+              <LogoIcon size={24} />
+            </span>
+            <h1>talknesty</h1>
+          </div>
+
+          {ThemeButton ? (
+            <ThemeButton theme={theme} onToggleTheme={onToggleTheme} className="chat-theme-btn" />
+          ) : null}
         </div>
 
         <div className="room-card">
@@ -73,8 +82,8 @@ export default function ChatPage({
               </span>
 
               <div>
-                <p>{user.id === currentUserId ? "You" : user.name}</p>
-                <small>{user.status === "online" ? "Online" : "Offline"}</small>
+                <p className="user-name">{user.id === currentUserId ? "You" : user.name}</p>
+                <small className="user-status">{user.status === "online" ? "Online" : "Offline"}</small>
               </div>
             </div>
           ))}
