@@ -1,4 +1,6 @@
 import React from "react";
+import Lottie from "lottie-react";
+import confettiAnimation from "../assets/confetti.json";
 import {
   CheckCheck,
   Copy,
@@ -68,8 +70,8 @@ export default function ChatPage({
           {connection === "online"
             ? "You are online"
             : connection === "connecting"
-            ? "Connecting"
-            : "You are offline"}
+              ? "Connecting"
+              : "You are offline"}
         </div>
 
         <section className="people">
@@ -150,9 +152,19 @@ export default function ChatPage({
             .filter((user) => user.status === "online" && user.id !== currentUserId)
             .slice(-1)
             .map((user) => (
-              <div className="join-animation" key={`join-${user.id}`}>
-                🎉 <span>{user.name}</span> joined the room
-              </div>
+       <>
+  <Lottie
+    animationData={confettiAnimation}
+    loop={false}
+    className="join-lottie-bg"
+  />
+
+  <div className="join-animation" key={`join-${user.id}`}>
+    <div className="join-animation-content">
+      🎉 <span>{user.name}</span> joined the room
+    </div>
+  </div>
+</>
             ))}
 
           {typingText ? <p className="typing">{typingText}</p> : null}
