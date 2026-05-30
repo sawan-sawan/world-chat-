@@ -56,6 +56,7 @@ function App() {
   const [users, setUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [draft, setDraft] = useState("");
+  const [entryNotice, setEntryNotice] = useState(null);
   const [connection, setConnection] = useState("idle");
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [error, setError] = useState("");
@@ -127,6 +128,14 @@ function App() {
       setContacts((current) => mergePresence(current, roomUsers || []));
     });
 
+    socket.on("room:joined", () => {
+      showEntryNotice("You have joined");
+    });
+
+    socket.on("room:user-joined", ({ name: joinedName }) => {
+      showEntryNotice(`${joinedName} has joined`);
+    });
+
     socket.on("typing:update", ({ id, name: typingName, typing }) => {
       setTypingUsers((current) => {
         const next = new Map(current);
@@ -192,6 +201,15 @@ function App() {
     }, 900);
   }
 
+  function showEntryNotice(text) {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setEntryNotice({ id, text });
+
+    window.setTimeout(() => {
+      setEntryNotice((current) => current?.id === id ? null : current);
+    }, 2400);
+  }
+
   async function copyInvite() {
     const text = `Join my Talknesty room: ${roomId}`;
     await navigator.clipboard?.writeText(text);
@@ -204,6 +222,7 @@ function App() {
     setUsers([]);
     setContacts([]);
     setTypingUsers(new Map());
+    setEntryNotice(null);
     setConnection("idle");
   }
 
@@ -231,6 +250,7 @@ function App() {
       draft={draft}
       error={error}
       inputRef={inputRef}
+      entryNotice={entryNotice}
       listRef={listRef}
       messages={messages}
       onlineCount={onlineCount}

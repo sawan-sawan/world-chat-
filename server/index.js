@@ -92,6 +92,14 @@ io.on("connection", (socket) => {
     });
 
     if (!isReconnect) {
+      socket.emit("room:joined", {
+        name: safeName,
+      });
+
+      socket.to(safeRoomId).emit("room:user-joined", {
+        name: safeName,
+      });
+
       socket.to(safeRoomId).emit("message:new", makeMessage({
         roomId: safeRoomId,
         sender: { id: "system", name: "World Chat", color: "#475569" },
