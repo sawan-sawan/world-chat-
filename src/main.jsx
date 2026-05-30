@@ -76,6 +76,7 @@ function App() {
   const [connection, setConnection] = useState("idle");
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [error, setError] = useState("");
+  const [joinNotice, setJoinNotice] = useState(null);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("talknesty-theme") || "light"
   );
@@ -137,15 +138,49 @@ function App() {
 
     socket.on("room:error", setError);
 
-    socket.on("room:history", ({ messages: history, users: roomUsers }) => {
-      setMessages(history || []);
-      setUsers(roomUsers || []);
-      setContacts((current) => mergePresence(current, roomUsers || []));
+socket.on("room:history", ({ messages: history, users: roomUsers }) => {
+  setMessages(history || []);
+  setUsers(roomUsers || []);
+  setContacts((current) => mergePresence(current, roomUsers || []));
+
+  setJoinNotice({
+    id: `self-${Date.now()}`,
+    name: session.name,
+    isMe: true,
+  });
+
+  setTimeout(() => {
+    setJoinNotice(null);
+  }, 2000);
+});
+
+socket.on("message:new", (message) => {
+  setMessages((current) => [...current, message]);
+
+  const text = message?.text || "";
+
+  if (
+    message?.system &&
+    text.toLowerCase().includes("joined the room")
+  ) {
+    const joinedName = text
+      .replace(/joined the room/i, "")
+      .trim();
+
+    const isMe =
+      joinedName.toLowerCase() === session?.name?.toLowerCase();
+
+    setJoinNotice({
+      id: Date.now(),
+      name: joinedName,
+      isMe,
     });
 
-    socket.on("message:new", (message) => {
-      setMessages((current) => [...current, message]);
-    });
+    setTimeout(() => {
+      setJoinNotice(null);
+    }, 2000);
+  }
+});
 
     socket.on("presence:update", (roomUsers) => {
       setUsers(roomUsers || []);
@@ -288,6 +323,7 @@ function App() {
       onSendMessage={sendMessage}
       onToggleTheme={toggleTheme}
       timeLabel={timeLabel}
+      joinNotice={joinNotice}
     />
   );
 }

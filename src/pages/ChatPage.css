@@ -615,17 +615,17 @@
 }
 /* Join Animation + Lottie Background */
 
-.messages {
+.chat-panel {
   position: relative;
 }
 
 .join-animation {
   position: absolute;
   left: 50%;
-  top: 50%;
-  z-index: 30;
+  top: 86px;
+  z-index: 60;
 
-  width: min(150px, 42vw);
+  width: min(180px, 52vw);
   min-height: 58px;
   padding: 10px 14px;
 
@@ -643,29 +643,29 @@
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.18);
 
-  transform: translate(-50%, -50%);
-  animation: joinCenterPop 2s ease forwards;
+  transform: translateX(-50%);
+  animation: joinTopPop 2s ease forwards;
 }
 
 .join-lottie-bg {
   position: absolute;
   left: 50%;
-  top: 50%;
-  z-index: 25;
+  top: 86px;
+  z-index: 55;
 
   width: 260px;
   height: 260px;
 
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -38%);
   pointer-events: none;
   opacity: 0.95;
 
-  animation: joinLottieFade 2s ease forwards;
+  animation: joinLottieTopFade 2s ease forwards;
 }
 
 .join-animation-content {
   position: relative;
-  z-index: 35;
+  z-index: 65;
 
   color: #ffffff;
   font-size: 13px;
@@ -679,58 +679,60 @@
   font-weight: 900;
 }
 
-@keyframes joinCenterPop {
+@keyframes joinTopPop {
   0% {
     opacity: 0;
-    transform: translate(-50%, -45%) scale(0.82);
+    transform: translateX(-50%) translateY(-18px) scale(0.86);
   }
 
   15% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.06);
+    transform: translateX(-50%) translateY(0) scale(1.05);
   }
 
   75% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -55%) scale(0.92);
+    transform: translateX(-50%) translateY(-14px) scale(0.95);
   }
 }
 
-@keyframes joinLottieFade {
+@keyframes joinLottieTopFade {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.75);
+    transform: translate(-50%, -38%) scale(0.75);
   }
 
   12% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, -38%) scale(1);
   }
 
   80% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.05);
+    transform: translate(-50%, -38%) scale(1.05);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.12);
+    transform: translate(-50%, -38%) scale(1.12);
   }
 }
 
 @media (max-width: 700px) {
   .join-animation {
-    width: min(135px, 46vw);
+    top: 78px;
+    width: min(160px, 58vw);
     min-height: 54px;
     padding: 9px 12px;
   }
 
   .join-lottie-bg {
+    top: 78px;
     width: 230px;
     height: 230px;
   }

@@ -35,6 +35,7 @@ export default function ChatPage({
   onSendMessage,
   onToggleTheme,
   timeLabel,
+  joinNotice,
 }) {
   return (
     <main className="chat-layout">
@@ -148,24 +149,30 @@ export default function ChatPage({
             );
           })}
 
-          {contacts
-            .filter((user) => user.status === "online" && user.id !== currentUserId)
-            .slice(-1)
-            .map((user) => (
-       <>
-  <Lottie
-    animationData={confettiAnimation}
-    loop={false}
-    className="join-lottie-bg"
-  />
+        
+    {joinNotice ? (
+  <React.Fragment key={joinNotice.id}>
+    <Lottie
+      animationData={confettiAnimation}
+      loop={false}
+      className="join-lottie-bg"
+    />
 
-  <div className="join-animation" key={`join-${user.id}`}>
-    <div className="join-animation-content">
-      🎉 <span>{user.name}</span> joined the room
+    <div className="join-animation">
+      <div className="join-animation-content">
+        {joinNotice.isMe ? (
+          <>
+            🚀 <span>You</span> have entered the chat
+          </>
+        ) : (
+          <>
+            🎉 <span>{joinNotice.name}</span> joined the room
+          </>
+        )}
+      </div>
     </div>
-  </div>
-</>
-            ))}
+  </React.Fragment>
+) : null}
 
           {typingText ? <p className="typing">{typingText}</p> : null}
         </div>
