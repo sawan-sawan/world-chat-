@@ -1,19 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
-import {
-  ArrowRight,
-  CheckCheck,
-  Copy,
-  LogOut,
-  MessageCircle,
-  Send,
-  Sparkles,
-  User,
-  Users,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
+import ChatPage from "./components/ChatPage";
+import IntroScreen from "./components/IntroScreen";
+import LoginPage from "./components/LoginPage";
 import "./styles.css";
 
 const SERVER_URL =
@@ -53,13 +43,9 @@ function timeLabel(value) {
   }).format(new Date(value));
 }
 
-function LogoIcon({ size = 28 }) {
-  return <MessageCircle size={size} fill="currentColor" strokeWidth={2.4} />;
-}
-
 function App() {
   const initialProfile = savedProfile();
-const inputRef = useRef(null);
+  const inputRef = useRef(null);
   const [clientId] = useState(() => initialProfile.clientId || getClientId());
   const [showIntro, setShowIntro] = useState(true);
   const [name, setName] = useState(initialProfile.name || "");
@@ -221,222 +207,43 @@ const inputRef = useRef(null);
     setConnection("idle");
   }
 
-  if (showIntro) {
-    return (
-      <main className="intro-screen">
-        <div className="intro-logo">
-          <LogoIcon size={44} />
-        </div>
-        <h1>talknesty</h1>
-        <p>Chat freely. Connect deeply. Be you.</p>
-      </main>
-    );
-  }
+  if (showIntro) return <IntroScreen />;
 
   if (!session) {
     return (
-      <main className="shell">
-        <section className="auth-panel">
-          <div className="brand-row hero-brand">
-            <span className="brand-mark">
-              <LogoIcon size={30} />
-            </span>
-
-            <div>
-              <h1>talknesty</h1>
-              <p>Join a room and start chatting instantly with anyone, anywhere.</p>
-            </div>
-          </div>
-
-          <form className="join-form" onSubmit={joinRoom}>
-            <label>
-              Name
-              <div className="input-icon">
-                <User size={20} />
-                <input
-                  autoFocus
-                  value={name}
-                  maxLength={28}
-                  placeholder="Name"
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </div>
-            </label>
-
-            <label>
-              Room ID
-              <div className="input-action">
-                <div className="input-icon">
-                  <Users size={20} />
-                  <input
-                    value={roomInput}
-                    maxLength={32}
-                    placeholder="Room ID"
-                    onChange={(event) => setRoomInput(event.target.value.toUpperCase())}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="icon-button"
-                  title="New room code"
-                  onClick={() => setRoomInput(randomRoom())}
-                >
-                  <ArrowRight size={18} />
-                </button>
-              </div>
-            </label>
-
-            {error ? <p className="error">{error}</p> : null}
-
-            <button className="primary-button" type="submit">
-              Login
-            </button>
-          </form>
-        </section>
-      </main>
+      <LoginPage
+        name={name}
+        roomInput={roomInput}
+        error={error}
+        onNameChange={setName}
+        onRoomChange={setRoomInput}
+        onGenerateRoom={() => setRoomInput(randomRoom())}
+        onSubmit={joinRoom}
+      />
     );
   }
 
   return (
-    <main className="chat-layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <span className="brand-mark small">
-            <LogoIcon size={24} />
-          </span>
-          <h1>talknesty</h1>
-        </div>
-
-        <div className="room-card">
-          <div>
-            <p className="eyebrow">Room</p>
-            <h2>{roomId}</h2>
-            <p className="room-subtitle">{onlineCount} online now</p>
-          </div>
-
-          <button className="icon-button" type="button" title="Copy invite" onClick={copyInvite}>
-            <Copy size={18} />
-          </button>
-        </div>
-
-        <div className={`status ${connection}`}>
-          {connection === "online" ? <Wifi size={17} /> : <WifiOff size={17} />}
-          <span />
-          {connection === "online"
-            ? "You are online"
-            : connection === "connecting"
-            ? "Connecting"
-            : "You are offline"}
-        </div>
-
-        <section className="people">
-          <h3>People</h3>
-
-          {contacts.map((user) => (
-            <div className={`person ${user.status}`} key={user.id}>
-              <span className="person-avatar" style={{ background: user.color }}>
-                {user.name.slice(0, 1).toUpperCase()}
-              </span>
-
-              <div>
-                <p>{user.id === currentUserId ? "You" : user.name}</p>
-                <small>{user.status === "online" ? "Online" : "Offline"}</small>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        <button className="secondary-button" type="button" onClick={leaveRoom}>
-          <LogOut size={18} />
-          Leave Room
-        </button>
-      </aside>
-
-      <section className="chat-panel">
-        <header className="chat-header">
-          <div className="chat-title">
-            <span className="chat-mark">
-              <Sparkles size={20} />
-            </span>
-
-            <div>
-              <p className="eyebrow">Realtime chat</p>
-              <h2>{primaryContact?.name || roomId}</h2>
-              <p className="chat-subtitle">{roomStatus}</p>
-            </div>
-          </div>
-
-          <div className="delivered">
-            <CheckCheck size={18} />
-            {connection === "online" ? "Live sync" : "Offline"}
-          </div>
-        </header>
-
-        {error ? <p className="error inline">{error}</p> : null}
-
-        <div className="messages" ref={listRef}>
-          {messages.map((message) => {
-            const mine = message.sender.id === currentUserId;
-
-            return (
-              <article
-                className={`message ${mine ? "mine" : ""} ${message.system ? "system" : ""}`}
-                key={message.id}
-              >
-                {!message.system ? (
-                  <div className="avatar" style={{ background: message.sender.color }}>
-                    {message.sender.name.slice(0, 1).toUpperCase()}
-                  </div>
-                ) : null}
-
-                <div className="bubble">
-                  {!message.system ? (
-                    <div className="message-meta">
-                      <strong>{mine ? "You" : message.sender.name}</strong>
-                      <span>{timeLabel(message.createdAt)}</span>
-                    </div>
-                  ) : null}
-
-                  <p>{message.text}</p>
-                </div>
-              </article>
-            );
-          })}
-{contacts
-  .filter((user) => user.status === "online" && user.id !== currentUserId)
-  .slice(-1)
-  .map((user) => (
-    <div className="join-animation" key={`join-${user.id}`}>
-      🎉 <span>{user.name}</span> joined the room
-    </div>
-  ))}
-          {typingText ? <p className="typing">{typingText}</p> : null}
-        </div>
-
-        <form className="composer" onSubmit={sendMessage}>
-  const inputRef = useRef(null);<input
-  ref={inputRef}
-  value={draft}
-  placeholder="Message likhein..."
-  maxLength={1200}
-  onChange={(event) => updateDraft(event.target.value)}
-  onFocus={() => {
-    setTimeout(() => {
-      inputRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 300);
-  }}
-/>
-
-          <button className="send-button" type="submit" title="Send message">
-            <Send size={20} />
-          </button>
-        </form>
-      </section>
-    </main>
+    <ChatPage
+      contacts={contacts}
+      connection={connection}
+      currentUserId={currentUserId}
+      draft={draft}
+      error={error}
+      inputRef={inputRef}
+      listRef={listRef}
+      messages={messages}
+      onlineCount={onlineCount}
+      primaryContact={primaryContact}
+      roomId={roomId}
+      roomStatus={roomStatus}
+      timeLabel={timeLabel}
+      typingText={typingText}
+      onCopyInvite={copyInvite}
+      onDraftChange={updateDraft}
+      onLeaveRoom={leaveRoom}
+      onSendMessage={sendMessage}
+    />
   );
 }
 
