@@ -797,3 +797,70 @@ input:focus {
     transform: translate(-50%, -60%) scale(.9);
   }
 }
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+@media (max-width: 760px) {
+  body {
+    overflow: hidden;
+  }
+
+  .chat-layout {
+    height: 100dvh;
+    min-height: 100dvh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  .chat-panel {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-header {
+    flex-shrink: 0;
+  }
+
+  .messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .composer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    flex-shrink: 0;
+    background: #ffffff;
+    grid-template-columns: 1fr 52px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .composer input {
+    height: 52px;
+    font-size: 16px !important;
+  }
+
+  .send-button {
+    width: 52px;
+    height: 52px;
+  }
+}
