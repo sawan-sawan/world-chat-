@@ -315,6 +315,7 @@ input:focus {
 
 .room-card {
   display: flex;
+  height: 90px;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
