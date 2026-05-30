@@ -226,7 +226,7 @@ function App() {
                 autoFocus
                 value={name}
                 maxLength={28}
-                placeholder="Sawan"
+                placeholder="Name"
                 onChange={(event) => setName(event.target.value)}
               />
             </label>
@@ -237,7 +237,7 @@ function App() {
                 <input
                   value={roomInput}
                   maxLength={32}
-                  placeholder="FAMILY01"
+                  placeholder="Room Id"
                   onChange={(event) => setRoomInput(event.target.value.toUpperCase())}
                 />
                 <button type="button" className="icon-button" title="New room code" onClick={() => setRoomInput(randomRoom())}>
