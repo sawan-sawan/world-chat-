@@ -1,3 +1,4 @@
+import React from "react";
 import { ArrowRight, User, Users } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
 import "./LoginPage.css";
