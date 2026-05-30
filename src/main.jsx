@@ -59,7 +59,7 @@ function LogoIcon({ size = 28 }) {
 
 function App() {
   const initialProfile = savedProfile();
-
+const inputRef = useRef(null);
   const [clientId] = useState(() => initialProfile.clientId || getClientId());
   const [showIntro, setShowIntro] = useState(true);
   const [name, setName] = useState(initialProfile.name || "");
@@ -415,12 +415,21 @@ function App() {
         </div>
 
         <form className="composer" onSubmit={sendMessage}>
-          <input
-            value={draft}
-            placeholder="Message likhein..."
-            maxLength={1200}
-            onChange={(event) => updateDraft(event.target.value)}
-          />
+  const inputRef = useRef(null);<input
+  ref={inputRef}
+  value={draft}
+  placeholder="Message likhein..."
+  maxLength={1200}
+  onChange={(event) => updateDraft(event.target.value)}
+  onFocus={() => {
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 300);
+  }}
+/>
 
           <button className="send-button" type="submit" title="Send message">
             <Send size={20} />
