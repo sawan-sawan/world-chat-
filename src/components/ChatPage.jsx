@@ -1,6 +1,5 @@
 import ChatHeader from "./ChatHeader";
 import ChatSidebar from "./ChatSidebar";
-import EntryAnimation from "./EntryAnimation";
 import MessageComposer from "./MessageComposer";
 import MessageList from "./MessageList";
 
@@ -11,7 +10,6 @@ export default function ChatPage({
   draft,
   error,
   inputRef,
-  entryNotice,
   listRef,
   messages,
   onlineCount,
@@ -47,9 +45,8 @@ export default function ChatPage({
 
         {error ? <p className="error inline">{error}</p> : null}
 
-        <EntryAnimation notice={entryNotice} />
-
         <MessageList
+          contacts={contacts}
           currentUserId={currentUserId}
           listRef={listRef}
           messages={messages}
