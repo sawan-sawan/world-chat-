@@ -479,7 +479,9 @@ input:focus {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
   background:
+
     linear-gradient(rgba(248, 251, 255, 0.94), rgba(248, 251, 255, 0.94)),
     url("data:image/svg+xml,%3Csvg width='90' height='90' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%232563eb' stroke-opacity='.08' stroke-width='1.5'%3E%3Cpath d='M20 28h32a8 8 0 0 1 8 8v10a8 8 0 0 1-8 8H34l-10 8v-8h-4a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z'/%3E%3Cpath d='M18 74l18-10 18 10'/%3E%3Ccircle cx='68' cy='20' r='9'/%3E%3C/g%3E%3C/svg%3E");
 }
@@ -738,5 +740,60 @@ input:focus {
 
   .brand-row h1 {
     font-size: 46px;
+  }
+}
+.join-animation {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  min-width: 280px;
+  max-width: 420px;
+
+  padding: 16px 28px;
+  border-radius: 20px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(24,184,245,.95),
+    rgba(37,99,235,.95)
+  );
+
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+
+  box-shadow: 0 20px 50px rgba(37,99,235,.35);
+
+  z-index: 9999;
+
+  animation: joinFade 2s ease forwards;
+}
+
+.join-animation span {
+  font-weight: 900;
+}
+
+@keyframes joinFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(.8);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60%) scale(.9);
   }
 }
