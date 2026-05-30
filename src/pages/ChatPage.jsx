@@ -76,6 +76,7 @@ export default function ChatPage({
         </div>
 
         <section className="people">
+   
           <h3>People</h3>
 
           {contacts.map((user) => (
@@ -99,6 +100,29 @@ export default function ChatPage({
       </aside>
 
       <section className="chat-panel">
+               {joinNotice ? (
+  <div className="join-overlay" key={joinNotice.id}>
+    <Lottie
+      animationData={confettiAnimation}
+      loop={false}
+      className="join-lottie-bg"
+    />
+
+    <div className="join-animation">
+      <div className="join-animation-content">
+        {joinNotice.isMe ? (
+          <>
+            🚀 <span>You</span> have entered the chat
+          </>
+        ) : (
+          <>
+            🎉 <span>{joinNotice.name}</span> joined the room
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+) : null} 
         <header className="chat-header">
           <div className="chat-title">
             <span className="chat-mark">
@@ -150,29 +174,7 @@ export default function ChatPage({
           })}
 
         
-    {joinNotice ? (
-  <React.Fragment key={joinNotice.id}>
-    <Lottie
-      animationData={confettiAnimation}
-      loop={false}
-      className="join-lottie-bg"
-    />
-
-    <div className="join-animation">
-      <div className="join-animation-content">
-        {joinNotice.isMe ? (
-          <>
-            🚀 <span>You</span> have entered the chat
-          </>
-        ) : (
-          <>
-            🎉 <span>{joinNotice.name}</span> joined the room
-          </>
-        )}
-      </div>
-    </div>
-  </React.Fragment>
-) : null}
+  
 
           {typingText ? <p className="typing">{typingText}</p> : null}
         </div>
