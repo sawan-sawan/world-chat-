@@ -208,6 +208,25 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("profile:update", ({ name, photoUrl }) => {
+    const roomId = socket.data.roomId;
+    const room = roomId ? rooms.get(roomId) : null;
+    if (!room) return;
+
+    const clientId = socket.data.clientId || socket.id;
+    const user = room.users.get(clientId);
+    if (!user) return;
+
+    const safeName = String(name || user.name || "Guest").trim().slice(0, 28);
+    const safePhotoUrl = cleanProfilePhoto(photoUrl);
+
+    socket.data.name = safeName;
+    socket.data.photoUrl = safePhotoUrl;
+    user.name = safeName;
+    user.photoUrl = safePhotoUrl;
+    io.to(roomId).emit("presence:update", roomUsers(roomId));
+  });
+
   socket.on("message:send", ({ text }) => {
     const roomId = socket.data.roomId;
     const room = roomId ? rooms.get(roomId) : null;

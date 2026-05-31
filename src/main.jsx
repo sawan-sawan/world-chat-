@@ -1,12 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { io } from "socket.io-client";
 import LogoIcon from "./components/LogoIcon";
 import {
   DEFAULT_ENTRY_ANIMATION_ID,
 } from "./data/entryAnimations";
 import ChatPage from "./pages/ChatPage";
+import AccountAuthPage from "./pages/AccountAuthPage";
 import LoginPage from "./pages/LoginPage";
+import { auth } from "./lib/firebase";
+import {
+  loadOrCreateProfile,
+  loadStoredContacts,
+  removeStoredRoomInvite,
+  saveStoredContact,
+  searchStoredProfile,
+  sendStoredRoomInvite,
+  subscribeStoredRoomInvites,
+  updateStoredProfile,
+} from "./lib/profileStore";
 import "./styles.css";
 
 const SERVER_URL =
@@ -68,6 +81,11 @@ function App() {
   const inputRef = useRef(null);
   const [clientId] = useState(() => initialProfile.clientId || getClientId());
   const [showIntro, setShowIntro] = useState(true);
+  const [accountReady, setAccountReady] = useState(false);
+  const [accountUser, setAccountUser] = useState(null);
+  const [accountProfile, setAccountProfile] = useState(null);
+  const [savedContacts, setSavedContacts] = useState([]);
+  const [roomInvites, setRoomInvites] = useState([]);
   const [name, setName] = useState(initialProfile.name || "");
   const [profilePhoto, setProfilePhoto] = useState(initialProfile.photoUrl || "");
   const [roomInput, setRoomInput] = useState(initialProfile.roomId || randomRoom());
@@ -110,6 +128,46 @@ function App() {
   useEffect(() => {
     const timer = window.setTimeout(() => setShowIntro(false), 1300);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!accountUser) return undefined;
+    return subscribeStoredRoomInvites(accountUser.uid, setRoomInvites, () => {
+      setError("Room requests ke liye updated Firestore rules publish karein.");
+    });
+  }, [accountUser]);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (user) => {
+      setAccountReady(false);
+      setAccountUser(user);
+
+      if (!user) {
+        setAccountProfile(null);
+        setSavedContacts([]);
+        setSession(null);
+        setAccountReady(true);
+        return;
+      }
+
+      try {
+        const profile = await loadOrCreateProfile(user);
+        const profileName = profile.name || user.displayName || user.email?.split("@")[0] || "Talknesty User";
+        const photoUrl = profile.photoUrl || "";
+        setAccountProfile(profile);
+        setName(profileName);
+        setProfilePhoto(photoUrl);
+        setSavedContacts(await loadStoredContacts(user.uid));
+        enterRoom(initialProfile.roomId || roomInput, {
+          name: profileName,
+          photoUrl,
+        });
+      } catch {
+        setError("Firebase profile load nahi hui. Firestore Database enable karke refresh karein.");
+      } finally {
+        setAccountReady(true);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -264,11 +322,9 @@ socket.on("message:new", (message) => {
     }
   }
 
-  function joinRoom(event) {
-    event.preventDefault();
-
-    const cleanName = name.trim();
-    const cleanRoom = roomInput.trim().toUpperCase();
+  function enterRoom(nextRoomId, profile = {}) {
+    const cleanName = String(profile.name || name).trim();
+    const cleanRoom = String(nextRoomId || roomInput).trim().toUpperCase();
 
     if (!cleanName || !cleanRoom) {
       setError("Name aur Room ID dono required hain.");
@@ -280,31 +336,21 @@ socket.on("message:new", (message) => {
       roomId: cleanRoom,
       color,
       clientId,
-      photoUrl: profilePhoto,
+      photoUrl: profile.photoUrl ?? profilePhoto,
     };
 
     localStorage.setItem("talknesty-profile", JSON.stringify(nextSession));
+    setRoomInput(cleanRoom);
     setSession(nextSession);
   }
 
-  async function updateProfilePhoto(file) {
-    if (!file) {
-      setProfilePhoto("");
-      setError("");
-      return;
-    }
+  function joinRoom(event) {
+    event.preventDefault();
+    enterRoom(roomInput);
+  }
 
-    if (!file.type.startsWith("image/")) {
-      setError("Profile picture ke liye image file choose karein.");
-      return;
-    }
-
-    try {
-      setProfilePhoto(await resizeProfilePhoto(file));
-      setError("");
-    } catch {
-      setError("Profile picture load nahi hui. Dusri image try karein.");
-    }
+  async function changeProfilePhoto(file) {
+    setProfilePhoto(file ? await blobToDataUrl(file) : "");
   }
 
   function sendMessage(event) {
@@ -384,6 +430,64 @@ socket.on("message:new", (message) => {
     setConnection("idle");
   }
 
+  async function updateAccountProfile(updates) {
+    if (!accountUser) return;
+    const nextProfile = { ...accountProfile, ...updates };
+    await updateStoredProfile(accountUser.uid, updates);
+    setAccountProfile(nextProfile);
+    setName(nextProfile.name || "");
+    setProfilePhoto(nextProfile.photoUrl || "");
+    setSession((current) => current ? {
+      ...current,
+      name: nextProfile.name || current.name,
+      photoUrl: nextProfile.photoUrl || "",
+    } : current);
+    socketRef.current?.emit("profile:update", {
+      name: nextProfile.name,
+      photoUrl: nextProfile.photoUrl,
+    });
+  }
+
+  async function searchAccount(searchTerm) {
+    if (!accountUser) return null;
+    return searchStoredProfile(searchTerm);
+  }
+
+  async function sendRoomInvite(profile) {
+    if (!accountUser || !accountProfile || !profile || profile.id === accountUser.uid) return;
+    await saveStoredContact(accountUser.uid, profile);
+    await sendStoredRoomInvite({
+      fromProfile: accountProfile,
+      roomId,
+      toUid: profile.id,
+    });
+    setSavedContacts(await loadStoredContacts(accountUser.uid));
+  }
+
+  async function acceptRoomInvite(invite) {
+    if (!accountUser) return;
+    await saveStoredContact(accountUser.uid, {
+      id: invite.fromUid,
+      name: invite.fromName,
+      username: invite.fromUsername,
+      photoUrl: invite.fromPhotoUrl,
+    });
+    await removeStoredRoomInvite(accountUser.uid, invite.id);
+    setSavedContacts(await loadStoredContacts(accountUser.uid));
+    leaveRoom();
+    enterRoom(invite.roomId);
+  }
+
+  async function dismissRoomInvite(invite) {
+    if (!accountUser) return;
+    await removeStoredRoomInvite(accountUser.uid, invite.id);
+  }
+
+  async function logoutAccount() {
+    socketRef.current?.disconnect();
+    await signOut(auth);
+  }
+
   if (showIntro) {
     return (
       <main className="intro-screen">
@@ -394,6 +498,14 @@ socket.on("message:new", (message) => {
         <p>Chat freely. Connect deeply. Be you.</p>
       </main>
     );
+  }
+
+  if (!accountReady) {
+    return <main className="intro-screen"><p>Loading your account...</p></main>;
+  }
+
+  if (!accountUser) {
+    return <AccountAuthPage />;
   }
 
   if (!session) {
@@ -408,7 +520,7 @@ socket.on("message:new", (message) => {
         onToggleTheme={toggleTheme}
         onGenerateRoom={() => setRoomInput(randomRoom())}
         onNameChange={setName}
-        onProfilePhotoChange={updateProfilePhoto}
+        onProfilePhotoChange={changeProfilePhoto}
         onRoomChange={setRoomInput}
         onSubmit={joinRoom}
       />
@@ -443,6 +555,15 @@ socket.on("message:new", (message) => {
       joinNotice={joinNotice}
       entryAnimationId={entryAnimationId}
       onSelectEntryAnimation={selectEntryAnimation}
+      accountProfile={accountProfile}
+      savedContacts={savedContacts}
+      roomInvites={roomInvites}
+      onAcceptRoomInvite={acceptRoomInvite}
+      onDismissRoomInvite={dismissRoomInvite}
+      onLogoutAccount={logoutAccount}
+      onSearchAccount={searchAccount}
+      onSendRoomInvite={sendRoomInvite}
+      onUpdateAccountProfile={updateAccountProfile}
     />
   );
 }
@@ -453,39 +574,6 @@ function blobToDataUrl(blob) {
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
-  });
-}
-
-async function resizeProfilePhoto(file) {
-  const sourceUrl = await blobToDataUrl(file);
-  const image = await loadImage(sourceUrl);
-  const size = Math.min(image.naturalWidth, image.naturalHeight);
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  canvas.width = 240;
-  canvas.height = 240;
-  context.drawImage(
-    image,
-    (image.naturalWidth - size) / 2,
-    (image.naturalHeight - size) / 2,
-    size,
-    size,
-    0,
-    0,
-    240,
-    240
-  );
-
-  return canvas.toDataURL("image/jpeg", 0.78);
-}
-
-function loadImage(sourceUrl) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = sourceUrl;
   });
 }
 

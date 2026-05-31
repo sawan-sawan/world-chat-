@@ -1,0 +1,119 @@
+.account-auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--app-bg);
+}
+
+.account-auth-card {
+  width: min(440px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px var(--shadow-soft);
+}
+
+.account-auth-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.account-auth-card h1 {
+  color: var(--primary-text);
+  font-family: "Righteous", sans-serif;
+  font-size: 32px;
+  text-transform: lowercase;
+}
+
+.account-auth-copy,
+.free-auth-note,
+.account-auth-message {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.account-auth-form {
+  display: grid;
+  gap: 13px;
+}
+
+.account-auth-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.account-auth-form label span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.account-auth-form input {
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  color: var(--primary-text);
+  background: var(--input-bg);
+  outline: 0;
+}
+
+.account-auth-form input:focus {
+  border-color: var(--primary);
+}
+
+.account-auth-primary {
+  min-height: 45px;
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  background: var(--primary);
+  font-weight: 900;
+}
+
+.account-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.account-auth-actions button {
+  border: 0;
+  color: var(--primary);
+  background: transparent;
+  font-weight: 800;
+}
+
+.account-auth-message {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--input-bg);
+}
+
+@media (max-width: 460px) {
+  .account-auth-page {
+    padding: 0;
+  }
+
+  .account-auth-card {
+    min-height: 100vh;
+    align-content: center;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    padding: 22px;
+  }
+}

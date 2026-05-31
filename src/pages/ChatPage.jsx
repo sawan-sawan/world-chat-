@@ -11,6 +11,7 @@ import {
   Send,
   Sparkles,
   Trash2,
+  UserRound,
   Users,
   Wifi,
   WifiOff,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
 import ProfileAvatar from "../components/ProfileAvatar";
+import ProfileSidebar from "../components/ProfileSidebar";
 import EntryMedia from "../components/EntryMedia";
 import VoiceMessagePlayer from "../components/VoiceMessagePlayer";
 import { getEntryAnimation } from "../data/entryAnimations";
@@ -51,6 +53,15 @@ export default function ChatPage({
   joinNotice,
   entryAnimationId,
   onSelectEntryAnimation,
+  accountProfile,
+  savedContacts,
+  roomInvites,
+  onAcceptRoomInvite,
+  onDismissRoomInvite,
+  onLogoutAccount,
+  onSearchAccount,
+  onSendRoomInvite,
+  onUpdateAccountProfile,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeView, setActiveView] = useState("chat");
@@ -59,6 +70,7 @@ export default function ChatPage({
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [attachment, setAttachment] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
+  const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
   const attachmentInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
@@ -301,6 +313,14 @@ export default function ChatPage({
               </button>
             </div>
 
+            <button className="mobile-entry-button" type="button" onClick={() => {
+              setMobileMenuOpen(false);
+              setProfileSidebarOpen(true);
+            }}>
+              <UserRound size={17} />
+              Profile
+            </button>
+
             <button className="mobile-entry-button" type="button" onClick={openEntryAnimations}>
               <PartyPopper size={17} />
               Entry Animate
@@ -361,6 +381,11 @@ export default function ChatPage({
         </section>
 
         <div className="sidebar-actions">
+          <button className="sidebar-entry-button profile" type="button" onClick={() => setProfileSidebarOpen(true)}>
+            <UserRound size={18} />
+            Profile
+          </button>
+
           <button className="sidebar-entry-button" type="button" onClick={openEntryAnimations}>
             <PartyPopper size={18} />
             Entry Animate
@@ -628,6 +653,21 @@ export default function ChatPage({
             </section>
           </div>
         ) : null}
+
+        <ProfileSidebar
+          open={profileSidebarOpen}
+          profile={accountProfile}
+          contacts={savedContacts}
+          roomId={roomId}
+          roomInvites={roomInvites}
+          onAcceptRoomInvite={onAcceptRoomInvite}
+          onClose={() => setProfileSidebarOpen(false)}
+          onDismissRoomInvite={onDismissRoomInvite}
+          onLogout={onLogoutAccount}
+          onSave={onUpdateAccountProfile}
+          onSearchAccount={onSearchAccount}
+          onSendRoomInvite={onSendRoomInvite}
+        />
           </>
         )}
       </section>
