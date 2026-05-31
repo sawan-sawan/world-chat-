@@ -381,7 +381,7 @@ export default function ChatPage({
   >
     <EntryMedia
       animation={entryAnimation}
-      className={`join-media-bg ${entryAnimation.type === "video" ? "video" : "lottie"}`}
+      className="join-media-bg lottie"
     />
 
     <div className="join-animation">

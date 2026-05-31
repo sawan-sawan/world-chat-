@@ -4,7 +4,6 @@ import { io } from "socket.io-client";
 import LogoIcon from "./components/LogoIcon";
 import {
   DEFAULT_ENTRY_ANIMATION_ID,
-  getEntryAnimation,
 } from "./data/entryAnimations";
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
@@ -225,14 +224,11 @@ socket.on("message:new", (message) => {
   }
 
   function showJoinNotice(notice) {
-    const animation = getEntryAnimation(entryAnimationIdRef.current);
-    const duration = animation.type === "video" ? 4200 : 4000;
-
     window.clearTimeout(joinNoticeTimerRef.current);
     setJoinNotice(notice);
     joinNoticeTimerRef.current = window.setTimeout(() => {
       setJoinNotice(null);
-    }, duration);
+    }, 4000);
   }
 
   function selectEntryAnimation(animationId) {

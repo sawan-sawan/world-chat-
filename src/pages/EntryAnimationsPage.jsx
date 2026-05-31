@@ -11,16 +11,6 @@ const CATALOG_SECTIONS = [
     description: "Ready-to-use entry animations for every account.",
   },
   {
-    id: "premium",
-    name: "Premium",
-    description: "A richer collection for upgraded profiles.",
-  },
-  {
-    id: "vip",
-    name: "VIP",
-    description: "Exclusive statement entrances for VIP profiles.",
-  },
-  {
     id: "legendary",
     name: "Legendary",
     description: "Rare animated entrances built for unforgettable room joins.",
@@ -82,7 +72,7 @@ export default function EntryAnimationsPage({
                           <EntryMedia
                             animation={animation}
                             loop
-                            className={`entry-preview-media ${animation.type === "video" ? "video" : "lottie"}`}
+                            className="entry-preview-media lottie"
                           />
 
                           <div

@@ -1196,12 +1196,6 @@
   transform: translate(-50%, -50%);
 }
 
-.join-media-bg.video {
-  width: min(560px, 92%);
-  height: min(560px, 92%);
-  object-fit: contain;
-}
-
 .join-animation {
   position: absolute;
   top: calc(50% + 118px);
@@ -1241,14 +1235,6 @@
   color: #ffffff;
   font-size: clamp(13px, 2vw, 15px);
   font-weight: 900;
-}
-
-.join-overlay.entry-media-video .join-animation {
-  animation-duration: 4.2s;
-}
-
-.join-overlay.entry-media-video {
-  animation-duration: 4.2s;
 }
 
 .entry-style-quick-burst .join-media-bg {
