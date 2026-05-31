@@ -286,6 +286,32 @@ socket.on("message:new", (message) => {
     setError("");
   }
 
+  async function sendMediaMessage(file) {
+    if (!file?.size) return false;
+
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      setError("Sirf photos aur videos send kar sakte hain.");
+      return false;
+    }
+
+    const mediaUrl = await blobToDataUrl(file);
+    if (mediaUrl.length > 12_500_000) {
+      setError("Photo ya video ka size zyada hai. Chhoti file choose karein.");
+      return false;
+    }
+
+    socketRef.current?.emit("media:send", {
+      mediaUrl,
+      mediaKind: isVideo ? "video" : "image",
+      fileName: file.name,
+    });
+    setError("");
+    return true;
+  }
+
   function updateDraft(value) {
     setDraft(value);
 
@@ -363,6 +389,7 @@ socket.on("message:new", (message) => {
       onLeaveRoom={leaveRoom}
       onSendMessage={sendMessage}
       onSendVoiceMessage={sendVoiceMessage}
+      onSendMediaMessage={sendMediaMessage}
       onToggleTheme={toggleTheme}
       timeLabel={timeLabel}
       joinNotice={joinNotice}

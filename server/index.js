@@ -13,12 +13,14 @@ const io = new Server(httpServer, {
     origin: CLIENT_ORIGIN,
     methods: ["GET", "POST"],
   },
-  maxHttpBufferSize: 3_000_000,
+  maxHttpBufferSize: 14_000_000,
 });
 
 const rooms = new Map();
 const MAX_VOICE_DATA_LENGTH = 2_500_000;
 const MAX_VOICE_DURATION_MS = 30_000;
+const MAX_MEDIA_DATA_LENGTH = 12_500_000;
+const MEDIA_EXPIRY_MS = 60 * 60 * 1000;
 
 function getRoom(roomId) {
   if (!rooms.has(roomId)) {
@@ -42,6 +44,18 @@ function roomUsers(roomId) {
   }));
 }
 
+function cleanExpiredMessages(room) {
+  const now = Date.now();
+  room.messages = room.messages.filter(
+    (message) => !message.expiresAt || new Date(message.expiresAt).getTime() > now
+  );
+}
+
+const cleanupTimer = setInterval(() => {
+  rooms.forEach((room) => cleanExpiredMessages(room));
+}, 5 * 60 * 1000);
+cleanupTimer.unref?.();
+
 function makeMessage({
   roomId,
   sender,
@@ -50,6 +64,10 @@ function makeMessage({
   type = "text",
   audioUrl = "",
   durationMs = 0,
+  mediaUrl = "",
+  mediaKind = "",
+  fileName = "",
+  expiresAt = "",
 }) {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -60,6 +78,10 @@ function makeMessage({
     type,
     audioUrl,
     durationMs,
+    mediaUrl,
+    mediaKind,
+    fileName,
+    expiresAt,
     createdAt: new Date().toISOString(),
   };
 }
@@ -83,6 +105,7 @@ io.on("connection", (socket) => {
     socket.join(safeRoomId);
 
     const room = getRoom(safeRoomId);
+    cleanExpiredMessages(room);
     const existingUser = room.users.get(safeClientId);
     const isReconnect = Boolean(existingUser);
 
@@ -177,6 +200,50 @@ io.on("connection", (socket) => {
       type: "voice",
       audioUrl: safeAudioUrl,
       durationMs: safeDurationMs,
+    });
+
+    room.messages.push(message);
+    room.messages = room.messages.slice(-100);
+    io.to(roomId).emit("message:new", message);
+  });
+
+  socket.on("media:send", ({ mediaUrl, mediaKind, fileName }) => {
+    const roomId = socket.data.roomId;
+    const room = roomId ? rooms.get(roomId) : null;
+
+    if (!room) {
+      socket.emit("room:error", "Join a room before sending media.");
+      return;
+    }
+
+    const safeMediaUrl = String(mediaUrl || "");
+    const safeMediaKind = mediaKind === "video" ? "video" : "image";
+    const safeFileName = String(fileName || "media").trim().slice(0, 80);
+    const expectedPrefix = safeMediaKind === "video" ? "data:video/" : "data:image/";
+
+    if (
+      !safeMediaUrl.startsWith(expectedPrefix) ||
+      safeMediaUrl.length > MAX_MEDIA_DATA_LENGTH
+    ) {
+      socket.emit("room:error", "Photo or video is invalid or too large.");
+      return;
+    }
+
+    cleanExpiredMessages(room);
+
+    const message = makeMessage({
+      roomId,
+      sender: {
+        id: socket.data.clientId || socket.id,
+        name: socket.data.name || "Guest",
+        color: socket.data.color || "#0f766e",
+      },
+      text: safeMediaKind === "video" ? "Video" : "Photo",
+      type: "media",
+      mediaUrl: safeMediaUrl,
+      mediaKind: safeMediaKind,
+      fileName: safeFileName,
+      expiresAt: new Date(Date.now() + MEDIA_EXPIRY_MS).toISOString(),
     });
 
     room.messages.push(message);

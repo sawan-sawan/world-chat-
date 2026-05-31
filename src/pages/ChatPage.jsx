@@ -6,6 +6,7 @@ import {
   LogOut,
   Menu,
   Mic,
+  Paperclip,
   PartyPopper,
   Send,
   Sparkles,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
 import EntryMedia from "../components/EntryMedia";
+import VoiceMessagePlayer from "../components/VoiceMessagePlayer";
 import { getEntryAnimation } from "../data/entryAnimations";
 import EntryAnimationsPage from "./EntryAnimationsPage";
 import "./ChatPage.css";
@@ -41,6 +43,7 @@ export default function ChatPage({
   onDraftChange,
   onLeaveRoom,
   onSendMessage,
+  onSendMediaMessage,
   onSendVoiceMessage,
   onToggleTheme,
   timeLabel,
@@ -53,6 +56,8 @@ export default function ChatPage({
   const [recording, setRecording] = useState(false);
   const [recordingError, setRecordingError] = useState("");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [attachment, setAttachment] = useState(null);
+  const attachmentInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const voiceChunksRef = useRef([]);
@@ -152,6 +157,46 @@ export default function ChatPage({
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
+  }
+
+  function chooseAttachment(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      setRecordingError("Sirf photo ya video select karein.");
+      return;
+    }
+
+    if (file.size > 9_000_000) {
+      setRecordingError("Photo ya video 9 MB se chhota hona chahiye.");
+      return;
+    }
+
+    clearAttachment();
+    setAttachment({
+      file,
+      kind: isVideo ? "video" : "image",
+      previewUrl: URL.createObjectURL(file),
+    });
+    setRecordingError("");
+  }
+
+  function clearAttachment() {
+    setAttachment((current) => {
+      if (current?.previewUrl) URL.revokeObjectURL(current.previewUrl);
+      return null;
+    });
+  }
+
+  async function sendAttachment() {
+    if (!attachment) return;
+    const sent = await onSendMediaMessage(attachment.file);
+    if (sent !== false) clearAttachment();
   }
 
   return (
@@ -402,10 +447,15 @@ export default function ChatPage({
                   ) : null}
 
                   {message.type === "voice" ? (
-                    <div className="voice-message">
-                      <Mic size={16} />
-                      <audio controls preload="metadata" src={message.audioUrl} />
-                      <span>{formatVoiceDuration(message.durationMs)}</span>
+                    <VoiceMessagePlayer audioUrl={message.audioUrl} durationMs={message.durationMs} />
+                  ) : message.type === "media" ? (
+                    <div className={`media-message ${message.mediaKind}`}>
+                      {message.mediaKind === "video" ? (
+                        <video controls playsInline preload="metadata" src={message.mediaUrl} />
+                      ) : (
+                        <img src={message.mediaUrl} alt={message.fileName || "Shared photo"} />
+                      )}
+                      <small>Temporary media</small>
                     </div>
                   ) : (
                     <p>{message.text}</p>
@@ -420,6 +470,28 @@ export default function ChatPage({
 
           {typingText ? <p className="typing">{typingText}</p> : null}
         </div>
+
+        {attachment ? (
+          <div className="attachment-draft">
+            <div className="attachment-draft-preview">
+              {attachment.kind === "video" ? (
+                <video muted playsInline src={attachment.previewUrl} />
+              ) : (
+                <img src={attachment.previewUrl} alt="" />
+              )}
+            </div>
+            <div className="attachment-draft-details">
+              <strong>{attachment.file.name}</strong>
+              <small>Temporary {attachment.kind}</small>
+            </div>
+            <button type="button" title="Remove attachment" onClick={clearAttachment}>
+              <X size={18} />
+            </button>
+            <button className="attachment-send-button" type="button" title="Send attachment" onClick={sendAttachment}>
+              <Send size={18} />
+            </button>
+          </div>
+        ) : null}
 
         <form className={`composer ${recording ? "recording" : ""}`} onSubmit={onSendMessage}>
           {recording ? (
@@ -441,30 +513,40 @@ export default function ChatPage({
           ) : (
             <>
               <input
-                ref={inputRef}
-                value={draft}
-                placeholder="Message likhein..."
-                maxLength={1200}
-                onChange={(event) => onDraftChange(event.target.value)}
-                onFocus={() => {
-                  setTimeout(() => {
-                    inputRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "center",
-                    });
-                  }, 300);
-                }}
+                ref={attachmentInputRef}
+                className="attachment-input"
+                type="file"
+                accept="image/*,video/*"
+                onChange={chooseAttachment}
               />
+              <button className="composer-icon-button" type="button" title="Attach photo or video" onClick={() => attachmentInputRef.current?.click()}>
+                <Paperclip size={20} />
+              </button>
 
-              {draft.trim() ? (
-                <button className="send-button" type="submit" title="Send message">
-                  <Send size={20} />
+              <div className="composer-input-shell">
+                <input
+                  ref={inputRef}
+                  value={draft}
+                  placeholder="Message likhein..."
+                  maxLength={1200}
+                  onChange={(event) => onDraftChange(event.target.value)}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      inputRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    }, 300);
+                  }}
+                />
+                <button className="composer-mic-button" type="button" title="Record voice message" onClick={startRecording}>
+                  <Mic size={19} />
                 </button>
-              ) : (
-                <button className="send-button voice-start-button" type="button" title="Record voice message" onClick={startRecording}>
-                  <Mic size={20} />
-                </button>
-              )}
+              </div>
+
+              <button className="send-button" type="submit" title="Send message" disabled={!draft.trim()}>
+                <Send size={20} />
+              </button>
             </>
           )}
         </form>
