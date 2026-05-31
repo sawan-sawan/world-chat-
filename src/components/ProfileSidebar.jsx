@@ -1,25 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Camera, Check, LogOut, Save, Search, Send, X } from "lucide-react";
+import { AtSign, Camera, LogOut, Mail, PartyPopper, Phone, Save, ShieldCheck, Sparkles, X } from "lucide-react";
 import ProfileAvatar from "./ProfileAvatar";
 import "./ProfileSidebar.css";
 
 export default function ProfileSidebar({
   open,
   profile,
-  contacts,
-  roomId,
-  roomInvites,
-  onAcceptRoomInvite,
   onClose,
-  onDismissRoomInvite,
   onLogout,
+  onOpenEntryAnimations,
   onSave,
-  onSearchAccount,
-  onSendRoomInvite,
 }) {
   const [draft, setDraft] = useState(profile || {});
-  const [accountSearch, setAccountSearch] = useState("");
-  const [searchResult, setSearchResult] = useState(null);
   const [message, setMessage] = useState("");
   const fileRef = useRef(null);
 
@@ -38,27 +30,6 @@ export default function ProfileSidebar({
     setMessage("Profile updated.");
   }
 
-  async function findContact(event) {
-    event.preventDefault();
-    try {
-      const match = await onSearchAccount(accountSearch);
-      setSearchResult(match);
-      setMessage(match ? "" : "Is mobile number se koi Talknesty user nahi mila.");
-    } catch {
-      setMessage("Search complete nahi hui. Firestore rules check karein.");
-    }
-  }
-
-  async function sendInvite() {
-    if (!searchResult) return;
-    try {
-      await onSendRoomInvite(searchResult);
-      setMessage(`${searchResult.name || searchResult.username} contact mein save ho gaya aur room ${roomId} ka invite send ho gaya.`);
-    } catch {
-      setMessage("Invite send nahi hua. Updated Firestore rules publish karein.");
-    }
-  }
-
   async function choosePhoto(file) {
     if (!file?.type.startsWith("image/")) return;
     const photoUrl = await resizePhoto(file);
@@ -69,9 +40,12 @@ export default function ProfileSidebar({
     <div className="profile-drawer-backdrop" onClick={onClose}>
       <aside className="profile-drawer" onClick={(event) => event.stopPropagation()}>
         <header>
-          <div>
-            <p>Account</p>
-            <h2>Your profile</h2>
+          <div className="profile-heading">
+            <span><ShieldCheck size={19} /></span>
+            <div>
+              <p>Account settings</p>
+              <h2>Your profile</h2>
+            </div>
           </div>
           <button type="button" title="Close profile" onClick={onClose}><X size={20} /></button>
         </header>
@@ -79,53 +53,26 @@ export default function ProfileSidebar({
         <form className="profile-editor" onSubmit={saveProfile}>
           <div className="profile-editor-photo">
             <ProfileAvatar name={draft.name || "You"} photoUrl={draft.photoUrl} />
+            <div>
+              <strong>{draft.name || "Your name"}</strong>
+              <small>Personalize your Talknesty account</small>
+            </div>
             <input ref={fileRef} type="file" accept="image/*" onChange={(event) => choosePhoto(event.target.files?.[0])} />
             <button type="button" title="Change profile picture" onClick={() => fileRef.current?.click()}><Camera size={17} /></button>
           </div>
-          <label>Name<input value={draft.name || ""} placeholder="Your name" onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
-          <label>Mobile number<input value={draft.phone || ""} inputMode="tel" placeholder="+91 mobile number" onChange={(event) => setDraft({ ...draft, phone: event.target.value })} /></label>
+          <label><span><AtSign size={15} /> Display name</span><input value={draft.name || ""} placeholder="Your name" onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
+          <label><span><Phone size={15} /> Mobile number</span><input value={draft.phone || ""} inputMode="tel" placeholder="+91 mobile number" onChange={(event) => setDraft({ ...draft, phone: event.target.value })} /></label>
+          <label><span><Mail size={15} /> Account email</span><input value={draft.email || ""} readOnly /></label>
           <button className="profile-save-button" type="submit"><Save size={17} /> Save profile</button>
         </form>
 
-        <section className="profile-contact-section">
-          <h3>Find people</h3>
-          <form onSubmit={findContact}>
-            <input value={accountSearch} inputMode="tel" placeholder="+91 mobile number" onChange={(event) => setAccountSearch(event.target.value)} />
-            <button type="submit" title="Search user"><Search size={17} /></button>
-          </form>
-          {searchResult ? (
-            <div className="profile-search-result">
-              <ProfileAvatar name={searchResult.name} photoUrl={searchResult.photoUrl} />
-              <div><strong>{searchResult.name}</strong><small>{searchResult.phone}</small></div>
-              <button type="button" title={`Save contact and invite to room ${roomId}`} onClick={sendInvite}><Send size={16} /></button>
-            </div>
-          ) : null}
-        </section>
-
-        <section className="profile-invite-list">
-          <h3>Room requests</h3>
-          {roomInvites.length ? roomInvites.map((invite) => (
-            <div className="profile-invite" key={invite.id}>
-              <ProfileAvatar name={invite.fromName} photoUrl={invite.fromPhotoUrl} />
-              <span><strong>{invite.fromName}</strong><small>Room {invite.roomId}</small></span>
-              <button type="button" title="Accept room request" onClick={() => onAcceptRoomInvite(invite)}><Check size={16} /></button>
-              <button type="button" title="Dismiss room request" onClick={() => onDismissRoomInvite(invite)}><X size={16} /></button>
-            </div>
-          )) : <p>No pending room requests.</p>}
-        </section>
-
-        <section className="profile-contact-list">
-          <h3>Saved contacts</h3>
-          {contacts.length ? contacts.map((contact) => (
-            <div key={contact.id}>
-              <ProfileAvatar name={contact.name} photoUrl={contact.photoUrl} />
-              <span><strong>{contact.name}</strong><small>{contact.phone}</small></span>
-              <button type="button" title={`Invite ${contact.name} to room ${roomId}`} onClick={() => onSendRoomInvite(contact)}><Send size={16} /></button>
-            </div>
-          )) : <p>No saved contacts yet.</p>}
-        </section>
-
         {message ? <p className="profile-drawer-message">{message}</p> : null}
+        <button className="profile-animation-button" type="button" onClick={onOpenEntryAnimations}>
+          <span><PartyPopper size={19} /></span>
+          <div><strong>Entry animations</strong><small>Choose how you enter a room</small></div>
+          <Sparkles size={17} />
+        </button>
+        <p className="profile-security-note"><ShieldCheck size={16} /> Your profile stays linked to your login account.</p>
         <button className="profile-logout-button" type="button" onClick={onLogout}><LogOut size={17} /> Log out</button>
       </aside>
     </div>

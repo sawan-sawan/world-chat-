@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -10,9 +9,13 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
+
+const ROOM_INVITE_DURATION_MS = 5000;
 
 export async function loadOrCreateProfile(user) {
   const profileRef = doc(db, "users", user.uid);
@@ -20,10 +23,11 @@ export async function loadOrCreateProfile(user) {
 
   if (snapshot.exists()) return { id: user.uid, ...snapshot.data() };
 
+  const username = createUsername(user);
   const profile = {
     name: user.displayName || createProfileName(user),
-    username: createUsername(user),
-    normalizedUsername: normalizeUsername(createUsername(user)),
+    username,
+    normalizedUsername: normalizeUsername(username),
     email: user.email || "",
     phone: user.phoneNumber || "",
     normalizedPhone: normalizePhone(user.phoneNumber),
@@ -64,8 +68,13 @@ export async function searchStoredProfile(phone) {
   return { id: match.id, ...match.data() };
 }
 
-export async function sendStoredRoomInvite({ fromProfile, roomId, toUid }) {
-  await addDoc(collection(db, "users", toUid, "roomRequests"), {
+export async function sendStoredRoomInvite({ fromProfile, roomId, toProfile }) {
+  const requestRef = doc(collection(db, "users", toProfile.id, "roomRequests"));
+  const outgoingRef = doc(db, "users", fromProfile.id, "outgoingRequests", requestRef.id);
+  const expiresAt = new Date(Date.now() + ROOM_INVITE_DURATION_MS);
+  const batch = writeBatch(db);
+
+  batch.set(requestRef, {
     fromUid: fromProfile.id,
     fromName: fromProfile.name || "",
     fromUsername: fromProfile.username || "",
@@ -73,7 +82,19 @@ export async function sendStoredRoomInvite({ fromProfile, roomId, toUid }) {
     roomId,
     status: "pending",
     createdAt: serverTimestamp(),
+    expiresAt,
   });
+  batch.set(outgoingRef, {
+    toUid: toProfile.id,
+    toName: toProfile.name || toProfile.username || "Talknesty user",
+    toPhotoUrl: toProfile.photoUrl || "",
+    roomId,
+    status: "pending",
+    createdAt: serverTimestamp(),
+    expiresAt,
+  });
+  await batch.commit();
+  return requestRef.id;
 }
 
 export function subscribeStoredRoomInvites(uid, onChange, onError = () => {}) {
@@ -82,8 +103,26 @@ export function subscribeStoredRoomInvites(uid, onChange, onError = () => {}) {
   }, onError);
 }
 
-export async function removeStoredRoomInvite(uid, requestId) {
-  await deleteDoc(doc(db, "users", uid, "roomRequests", requestId));
+export function subscribeStoredOutgoingInvites(uid, onChange, onError = () => {}) {
+  return onSnapshot(collection(db, "users", uid, "outgoingRequests"), (snapshot) => {
+    onChange(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
+  }, onError);
+}
+
+export async function finishStoredRoomInvite(uid, invite, status) {
+  const outgoingRef = doc(db, "users", invite.fromUid, "outgoingRequests", invite.id);
+  await deleteDoc(doc(db, "users", uid, "roomRequests", invite.id));
+  await updateDoc(outgoingRef, {
+    status,
+    respondedAt: serverTimestamp(),
+  }).catch(() => {});
+}
+
+export async function expireStoredOutgoingInvite(uid, requestId) {
+  await updateDoc(doc(db, "users", uid, "outgoingRequests", requestId), {
+    status: "expired",
+    respondedAt: serverTimestamp(),
+  });
 }
 
 export async function saveStoredContact(uid, profile) {

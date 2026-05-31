@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   CheckCheck,
+  Check,
+  ContactRound,
   Copy,
   Hash,
   LogOut,
   Menu,
   Mic,
   Paperclip,
-  PartyPopper,
+  Plus,
   Send,
+  Settings2,
   Sparkles,
   Trash2,
   UserRound,
@@ -20,7 +23,10 @@ import {
 import LogoIcon from "../components/LogoIcon";
 import ProfileAvatar from "../components/ProfileAvatar";
 import ProfileSidebar from "../components/ProfileSidebar";
+import ContactsPanel from "../components/ContactsPanel";
+import AppSettingsPanel from "../components/AppSettingsPanel";
 import EntryMedia from "../components/EntryMedia";
+import RoomInviteBanner from "../components/RoomInviteBanner";
 import VoiceMessagePlayer from "../components/VoiceMessagePlayer";
 import { getEntryAnimation } from "../data/entryAnimations";
 import EntryAnimationsPage from "./EntryAnimationsPage";
@@ -40,7 +46,6 @@ export default function ChatPage({
   roomId,
   roomStatus,
   theme,
-  ThemeButton,
   typingText,
   onCopyInvite,
   onDraftChange,
@@ -56,6 +61,7 @@ export default function ChatPage({
   accountProfile,
   savedContacts,
   roomInvites,
+  outgoingInvites,
   onAcceptRoomInvite,
   onDismissRoomInvite,
   onLogoutAccount,
@@ -71,6 +77,12 @@ export default function ChatPage({
   const [attachment, setAttachment] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
+  const [contactsPanelOpen, setContactsPanelOpen] = useState(false);
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
+  const [inviteFeedback, setInviteFeedback] = useState(null);
+  const [sentContactId, setSentContactId] = useState("");
+  const [sendConfirmation, setSendConfirmation] = useState("");
+  const [textSize, setTextSize] = useState(() => localStorage.getItem("talknesty-text-size") || "medium");
   const attachmentInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
@@ -78,11 +90,34 @@ export default function ChatPage({
   const recordingStartedAtRef = useRef(0);
   const recordingTimerRef = useRef(null);
   const shouldSendVoiceRef = useRef(false);
+  const outgoingStatusRef = useRef(new Map());
+  const feedbackTimerRef = useRef(null);
   const entryAnimation = getEntryAnimation(joinNotice?.animationId || entryAnimationId);
+  const activeRoomInvite = roomInvites
+    .filter((invite) => invite.status === "pending")
+    .sort((a, b) => getInviteTime(b) - getInviteTime(a))[0];
 
   useEffect(() => {
     return () => stopRecording(false);
   }, []);
+
+  useEffect(() => {
+    const previous = outgoingStatusRef.current;
+    outgoingInvites.forEach((invite) => {
+      const oldStatus = previous.get(invite.id);
+      if (oldStatus === "pending" && invite.status !== "pending") {
+        window.clearTimeout(feedbackTimerRef.current);
+        setInviteFeedback({
+          id: invite.id,
+          status: invite.status,
+          name: invite.toName,
+        });
+        feedbackTimerRef.current = window.setTimeout(() => setInviteFeedback(null), 4200);
+      }
+      previous.set(invite.id, invite.status);
+    });
+    return () => window.clearTimeout(feedbackTimerRef.current);
+  }, [outgoingInvites]);
 
   useEffect(() => {
     if (recordingSeconds < 30) return;
@@ -102,7 +137,25 @@ export default function ChatPage({
 
   function openEntryAnimations() {
     setMobileMenuOpen(false);
+    setProfileSidebarOpen(false);
     setActiveView("entry-animations");
+  }
+
+  function changeTextSize(size) {
+    localStorage.setItem("talknesty-text-size", size);
+    setTextSize(size);
+  }
+
+  async function sendContactInvite(contact) {
+    await onSendRoomInvite(contact);
+    setSentContactId(contact.id);
+    setSendConfirmation(`${contact.name} ko request send ho gayi.`);
+    window.setTimeout(() => setSentContactId(""), 1800);
+    window.setTimeout(() => setSendConfirmation(""), 2400);
+  }
+
+  function hasPendingInvite(contactId) {
+    return outgoingInvites.some((invite) => invite.toUid === contactId && invite.status === "pending");
   }
 
   async function startRecording() {
@@ -225,7 +278,7 @@ export default function ChatPage({
   }
 
   return (
-    <main className="chat-layout">
+    <main className={`chat-layout text-size-${textSize}`}>
       <div className="mobile-safe-strip" aria-hidden="true" />
 
       <header className="mobile-topbar">
@@ -236,17 +289,21 @@ export default function ChatPage({
           <span>talknesty</span>
         </div>
 
-        <button
-          className="mobile-menu-button"
-          type="button"
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-chat-menu"
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          title={mobileMenuOpen ? "Close menu" : "Open menu"}
-          onClick={() => setMobileMenuOpen((current) => !current)}
-        >
-          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="mobile-topbar-actions">
+          <button type="button" title="Contacts" onClick={() => setContactsPanelOpen(true)}><ContactRound size={20} /></button>
+          <button type="button" title="App settings" onClick={() => setSettingsPanelOpen(true)}><Settings2 size={20} /></button>
+          <button
+            className="mobile-menu-button"
+            type="button"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-chat-menu"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            title={mobileMenuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMobileMenuOpen((current) => !current)}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </header>
 
       <>
@@ -304,9 +361,6 @@ export default function ChatPage({
             </div>
 
             <div className="mobile-menu-actions">
-              {ThemeButton ? (
-                <ThemeButton theme={theme} onToggleTheme={onToggleTheme} className="mobile-theme-btn" />
-              ) : null}
               <button className="mobile-leave-button" type="button" onClick={onLeaveRoom}>
                 <LogOut size={17} />
                 Leave room
@@ -321,10 +375,6 @@ export default function ChatPage({
               Profile
             </button>
 
-            <button className="mobile-entry-button" type="button" onClick={openEntryAnimations}>
-              <PartyPopper size={17} />
-              Entry Animate
-            </button>
         </section>
       </>
 
@@ -337,9 +387,9 @@ export default function ChatPage({
             <h1>talknesty</h1>
           </div>
 
-          {ThemeButton ? (
-            <ThemeButton theme={theme} onToggleTheme={onToggleTheme} className="chat-theme-btn" />
-          ) : null}
+          <button className="sidebar-settings-button" type="button" title="App settings" onClick={() => setSettingsPanelOpen(true)}>
+            <Settings2 size={18} />
+          </button>
         </div>
 
         <div className="room-card">
@@ -364,6 +414,12 @@ export default function ChatPage({
               : "You are offline"}
         </div>
 
+        <button className="sidebar-profile-card" type="button" onClick={() => setProfileSidebarOpen(true)}>
+          <ProfileAvatar name={accountProfile?.name || "You"} photoUrl={accountProfile?.photoUrl} />
+          <span><strong>{accountProfile?.name || "Your profile"}</strong><small>View and edit profile</small></span>
+          <UserRound size={17} />
+        </button>
+
         <section className="people">
    
           <h3>People</h3>
@@ -380,22 +436,31 @@ export default function ChatPage({
           ))}
         </section>
 
-        <div className="sidebar-actions">
-          <button className="sidebar-entry-button profile" type="button" onClick={() => setProfileSidebarOpen(true)}>
-            <UserRound size={18} />
-            Profile
+        <section className="sidebar-friends">
+          <button className="sidebar-friends-heading" type="button" onClick={() => setContactsPanelOpen(true)}>
+            <span><ContactRound size={16} /> Friends</span>
+            <small><Plus size={14} /> Add friends</small>
           </button>
+          <div className="sidebar-friends-list">
+            {savedContacts.length ? savedContacts.map((contact) => {
+              const pending = hasPendingInvite(contact.id);
+              return (
+                <div className="sidebar-friend" key={contact.id}>
+                  <ProfileAvatar name={contact.name} photoUrl={contact.photoUrl} />
+                  <span><strong>{contact.name}</strong><small>{contact.phone || "Saved contact"}</small></span>
+                  <button className={pending ? "pending" : ""} type="button" title={pending ? "Request waiting for response" : "Send room request"} disabled={pending} onClick={() => sendContactInvite(contact)}>
+                    {sentContactId === contact.id ? <Check size={16} /> : <Plus size={16} />}
+                  </button>
+                </div>
+              );
+            }) : <p>No saved friends yet.</p>}
+          </div>
+        </section>
 
-          <button className="sidebar-entry-button" type="button" onClick={openEntryAnimations}>
-            <PartyPopper size={18} />
-            Entry Animate
-          </button>
-
-          <button className="secondary-button" type="button" onClick={onLeaveRoom}>
-            <LogOut size={18} />
-            Leave Room
-          </button>
-        </div>
+        <button className="sidebar-leave-button" type="button" onClick={onLeaveRoom}>
+          <LogOut size={18} />
+          Leave Room
+        </button>
       </aside>
 
       <section className={`chat-panel ${activeView === "entry-animations" ? "catalog-open" : ""}`}>
@@ -410,6 +475,26 @@ export default function ChatPage({
           />
         ) : (
           <>
+        {activeRoomInvite ? (
+          <RoomInviteBanner
+            invite={activeRoomInvite}
+            onAccept={onAcceptRoomInvite}
+            onDismiss={onDismissRoomInvite}
+          />
+        ) : null}
+
+        {inviteFeedback ? (
+          <div className={`invite-feedback ${inviteFeedback.status}`} role="status">
+            {inviteFeedback.status === "accepted"
+              ? `${inviteFeedback.name} accepted your room request.`
+              : `${inviteFeedback.name} did not accept your request. You can send it again.`}
+          </div>
+        ) : null}
+
+        {sendConfirmation ? (
+          <div className="invite-sent-confirmation" role="status"><Check size={16} /> {sendConfirmation}</div>
+        ) : null}
+
                {joinNotice ? (
   <div
     className={`join-overlay entry-style-${entryAnimation.id} entry-media-${entryAnimation.type}`}
@@ -657,16 +742,29 @@ export default function ChatPage({
         <ProfileSidebar
           open={profileSidebarOpen}
           profile={accountProfile}
+          onClose={() => setProfileSidebarOpen(false)}
+          onLogout={onLogoutAccount}
+          onOpenEntryAnimations={openEntryAnimations}
+          onSave={onUpdateAccountProfile}
+        />
+
+        <ContactsPanel
+          open={contactsPanelOpen}
           contacts={savedContacts}
           roomId={roomId}
-          roomInvites={roomInvites}
-          onAcceptRoomInvite={onAcceptRoomInvite}
-          onClose={() => setProfileSidebarOpen(false)}
-          onDismissRoomInvite={onDismissRoomInvite}
-          onLogout={onLogoutAccount}
-          onSave={onUpdateAccountProfile}
+          outgoingInvites={outgoingInvites}
+          onClose={() => setContactsPanelOpen(false)}
           onSearchAccount={onSearchAccount}
           onSendRoomInvite={onSendRoomInvite}
+        />
+
+        <AppSettingsPanel
+          open={settingsPanelOpen}
+          theme={theme}
+          textSize={textSize}
+          onClose={() => setSettingsPanelOpen(false)}
+          onTextSizeChange={changeTextSize}
+          onToggleTheme={onToggleTheme}
         />
           </>
         )}
@@ -707,4 +805,8 @@ function formatVoiceDuration(durationMs = 0) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = String(totalSeconds % 60).padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+function getInviteTime(invite) {
+  return invite.createdAt?.toMillis?.() || 0;
 }

@@ -24,8 +24,8 @@
   background: var(--sidebar-gradient);
   color: #ffffff;
   display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
-  gap: 22px;
+  grid-template-rows: auto auto auto auto minmax(84px, 1fr) minmax(108px, auto) auto;
+  gap: 14px;
   box-shadow: 0 22px 60px var(--shadow-blue);
   overflow: hidden;
 }
@@ -68,14 +68,16 @@
   box-shadow: none;
 }
 
-.chat-theme-btn {
+.sidebar-settings-button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
   flex: 0 0 auto;
-  min-height: 38px;
-  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.16);
-  box-shadow: none;
 }
 
 .room-card {
@@ -137,6 +139,46 @@
 
 .status.connecting span {
   background: #facc15;
+}
+
+.sidebar-profile-card {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 13px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.13);
+  text-align: left;
+}
+
+.sidebar-profile-card .profile-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  font-size: 14px;
+}
+
+.sidebar-profile-card span {
+  min-width: 0;
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.sidebar-profile-card strong,
+.sidebar-profile-card small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-profile-card small {
+  color: #dff7ff;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .people {
@@ -213,26 +255,122 @@
   font-weight: 900;
 }
 
-.sidebar-actions {
+.sidebar-friends {
   display: grid;
-  gap: 10px;
+  gap: 7px;
+  min-height: 0;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-.sidebar-entry-button {
-  min-height: 48px;
-  display: inline-flex;
+.sidebar-friends-heading {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 9px;
+  justify-content: space-between;
+  gap: 8px;
   border: 0;
-  border-radius: 14px;
   color: #ffffff;
-  background: linear-gradient(135deg, #18b8f5, #2563eb);
-  box-shadow: 0 12px 24px var(--shadow-blue);
+  background: transparent;
+  text-align: left;
   font-weight: 900;
 }
 
+.sidebar-friends-heading span,
+.sidebar-friends-heading small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sidebar-friends-heading small {
+  color: #dff7ff;
+  font-size: 11px;
+}
+
+.sidebar-friends-list {
+  display: grid;
+  gap: 5px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sidebar-friends-list > p {
+  color: #dff7ff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sidebar-friend {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.sidebar-friend .profile-avatar {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+
+.sidebar-friend > span {
+  min-width: 0;
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+
+.sidebar-friend strong,
+.sidebar-friend small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-friend small {
+  color: #dff7ff;
+  font-size: 10px;
+}
+
+.sidebar-friend button {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sidebar-friend button.pending svg {
+  animation: contactInviteSpin 1.15s linear infinite;
+}
+
+.sidebar-leave-button {
+  min-height: 45px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(251, 113, 133, 0.7);
+  border-radius: 12px;
+  color: #fecdd3;
+  background: rgba(190, 18, 60, 0.12);
+  font-weight: 900;
+}
+
+@keyframes contactInviteSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .chat-panel {
+  position: relative;
   min-width: 0;
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -242,6 +380,146 @@
   background: var(--surface);
   border: 1px solid var(--border-soft);
   box-shadow: 0 22px 60px var(--shadow-soft);
+}
+
+.room-invite-banner {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 2500;
+  width: min(480px, calc(100% - 28px));
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 40px 40px;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  padding: 12px 12px 15px;
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border-soft));
+  border-radius: 13px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 18px 46px rgba(2, 6, 23, 0.22);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+  animation: roomInviteIn 190ms ease both;
+}
+
+.room-invite-banner .profile-avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+}
+
+.room-invite-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.room-invite-copy span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--primary-text);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-invite-copy strong,
+.room-invite-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-invite-copy small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.room-invite-banner button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+}
+
+.room-invite-accept {
+  border: 0;
+  color: #ffffff;
+  background: #16a34a;
+}
+
+.room-invite-decline {
+  border: 1px solid color-mix(in srgb, #e11d48 30%, var(--border-soft));
+  color: #e11d48;
+  background: var(--input-bg);
+}
+
+.room-invite-timeline {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #18b8f5 var(--invite-progress), var(--border-soft) var(--invite-progress));
+  transition: background 100ms linear;
+}
+
+.invite-feedback {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 2400;
+  width: min(440px, calc(100% - 28px));
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, #e11d48 28%, var(--border-soft));
+  border-radius: 11px;
+  color: #be123c;
+  background: color-mix(in srgb, var(--surface) 92%, #ffe4e6 8%);
+  box-shadow: 0 16px 42px rgba(2, 6, 23, 0.18);
+  font-size: 13px;
+  font-weight: 800;
+  transform: translateX(-50%);
+  animation: roomInviteIn 190ms ease both;
+}
+
+.invite-feedback.accepted {
+  color: #15803d;
+  border-color: color-mix(in srgb, #16a34a 28%, var(--border-soft));
+  background: color-mix(in srgb, var(--surface) 92%, #dcfce7 8%);
+}
+
+.invite-sent-confirmation {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 2450;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: min(390px, calc(100% - 28px));
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, #16a34a 30%, var(--border-soft));
+  border-radius: 11px;
+  color: #15803d;
+  background: color-mix(in srgb, var(--surface) 92%, #dcfce7 8%);
+  box-shadow: 0 16px 42px rgba(2, 6, 23, 0.18);
+  font-size: 13px;
+  font-weight: 800;
+  transform: translateX(-50%);
+  animation: roomInviteIn 190ms ease both;
+}
+
+@keyframes roomInviteIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
 }
 
 .chat-panel.catalog-open {
@@ -491,6 +769,21 @@
   color: var(--text);
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.text-size-small .bubble p,
+.text-size-small .settings-preview-bubble {
+  font-size: 13px;
+}
+
+.text-size-medium .bubble p,
+.text-size-medium .settings-preview-bubble {
+  font-size: 15px;
+}
+
+.text-size-large .bubble p,
+.text-size-large .settings-preview-bubble {
+  font-size: 17px;
 }
 
 .typing {
@@ -880,6 +1173,24 @@
     z-index: 1200;
   }
 
+  .mobile-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mobile-topbar-actions > button {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid var(--border-soft);
+    border-radius: 11px;
+    color: var(--primary-text);
+    background: var(--input-bg);
+  }
+
   .mobile-brand {
     min-width: 0;
     display: flex;
@@ -1095,7 +1406,6 @@
 
   .mobile-menu-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
 
@@ -1141,6 +1451,35 @@
     border-left: 0;
     border-right: 0;
     box-shadow: none;
+  }
+
+  .room-invite-banner {
+    top: 10px;
+    grid-template-columns: 38px minmax(0, 1fr) 36px 36px;
+    gap: 8px;
+    width: calc(100% - 20px);
+    min-height: 70px;
+    padding: 10px 10px 14px;
+  }
+
+  .room-invite-banner .profile-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .room-invite-banner button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .invite-feedback {
+    top: 10px;
+    width: calc(100% - 20px);
+  }
+
+  .invite-sent-confirmation {
+    top: 10px;
+    width: calc(100% - 20px);
   }
 
   .chat-header {

@@ -11,12 +11,14 @@ import AccountAuthPage from "./pages/AccountAuthPage";
 import LoginPage from "./pages/LoginPage";
 import { auth } from "./lib/firebase";
 import {
+  expireStoredOutgoingInvite,
+  finishStoredRoomInvite,
   loadOrCreateProfile,
   loadStoredContacts,
-  removeStoredRoomInvite,
   saveStoredContact,
   searchStoredProfile,
   sendStoredRoomInvite,
+  subscribeStoredOutgoingInvites,
   subscribeStoredRoomInvites,
   updateStoredProfile,
 } from "./lib/profileStore";
@@ -86,6 +88,7 @@ function App() {
   const [accountProfile, setAccountProfile] = useState(null);
   const [savedContacts, setSavedContacts] = useState([]);
   const [roomInvites, setRoomInvites] = useState([]);
+  const [outgoingInvites, setOutgoingInvites] = useState([]);
   const [name, setName] = useState(initialProfile.name || "");
   const [profilePhoto, setProfilePhoto] = useState(initialProfile.photoUrl || "");
   const [roomInput, setRoomInput] = useState(initialProfile.roomId || randomRoom());
@@ -138,6 +141,28 @@ function App() {
   }, [accountUser]);
 
   useEffect(() => {
+    if (!accountUser) return undefined;
+    return subscribeStoredOutgoingInvites(accountUser.uid, setOutgoingInvites, () => {
+      setError("Outgoing requests ke liye updated Firestore rules publish karein.");
+    });
+  }, [accountUser]);
+
+  useEffect(() => {
+    if (!accountUser) return undefined;
+    const timers = outgoingInvites
+      .filter((invite) => invite.status === "pending")
+      .map((invite) => {
+        const expiresAt = invite.expiresAt?.toMillis?.() || Date.now() + 5000;
+        return window.setTimeout(() => {
+          expireStoredOutgoingInvite(accountUser.uid, invite.id).catch(() => {
+            setError("Room request status update nahi hui. Firestore rules publish karein.");
+          });
+        }, Math.max(0, expiresAt - Date.now()));
+      });
+    return () => timers.forEach(window.clearTimeout);
+  }, [accountUser, outgoingInvites]);
+
+  useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       setAccountReady(false);
       setAccountUser(user);
@@ -145,6 +170,7 @@ function App() {
       if (!user) {
         setAccountProfile(null);
         setSavedContacts([]);
+        setOutgoingInvites([]);
         setSession(null);
         setAccountReady(true);
         return;
@@ -455,11 +481,14 @@ socket.on("message:new", (message) => {
 
   async function sendRoomInvite(profile) {
     if (!accountUser || !accountProfile || !profile || profile.id === accountUser.uid) return;
+    if (outgoingInvites.some((invite) => invite.toUid === profile.id && invite.status === "pending")) {
+      throw new Error("Request ka response pending hai. 5 seconds ke baad dobara send kar sakte hain.");
+    }
     await saveStoredContact(accountUser.uid, profile);
     await sendStoredRoomInvite({
       fromProfile: accountProfile,
       roomId,
-      toUid: profile.id,
+      toProfile: profile,
     });
     setSavedContacts(await loadStoredContacts(accountUser.uid));
   }
@@ -472,15 +501,15 @@ socket.on("message:new", (message) => {
       username: invite.fromUsername,
       photoUrl: invite.fromPhotoUrl,
     });
-    await removeStoredRoomInvite(accountUser.uid, invite.id);
+    await finishStoredRoomInvite(accountUser.uid, invite, "accepted");
     setSavedContacts(await loadStoredContacts(accountUser.uid));
     leaveRoom();
     enterRoom(invite.roomId);
   }
 
-  async function dismissRoomInvite(invite) {
+  async function dismissRoomInvite(invite, status = "declined") {
     if (!accountUser) return;
-    await removeStoredRoomInvite(accountUser.uid, invite.id);
+    await finishStoredRoomInvite(accountUser.uid, invite, status);
   }
 
   async function logoutAccount() {
@@ -558,6 +587,7 @@ socket.on("message:new", (message) => {
       accountProfile={accountProfile}
       savedContacts={savedContacts}
       roomInvites={roomInvites}
+      outgoingInvites={outgoingInvites}
       onAcceptRoomInvite={acceptRoomInvite}
       onDismissRoomInvite={dismissRoomInvite}
       onLogoutAccount={logoutAccount}

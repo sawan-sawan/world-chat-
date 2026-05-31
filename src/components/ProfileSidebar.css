@@ -4,33 +4,49 @@
   z-index: 4000;
   display: flex;
   justify-content: flex-end;
-  background: rgba(2, 6, 23, 0.42);
-  backdrop-filter: blur(4px);
+  background: rgba(2, 6, 23, 0.46);
+  backdrop-filter: blur(5px);
 }
 
 .profile-drawer {
-  width: min(390px, 100%);
+  width: min(400px, 100%);
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 19px;
   overflow-y: auto;
   padding: 20px;
   color: var(--text);
   background: var(--surface);
-  box-shadow: -20px 0 60px rgba(2, 6, 23, 0.22);
+  box-shadow: -18px 0 55px rgba(2, 6, 23, 0.24);
+  animation: profileDrawerIn 190ms ease both;
 }
 
 .profile-drawer header,
-.profile-search-result,
-.profile-contact-list div {
+.profile-heading,
+.profile-editor-photo,
+.profile-security-note {
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .profile-drawer header {
   justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-heading {
+  gap: 10px;
+}
+
+.profile-heading > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #18b8f5, #2563eb);
 }
 
 .profile-drawer header p {
@@ -41,32 +57,60 @@
 }
 
 .profile-drawer header button,
-.profile-contact-section button {
-  width: 40px;
-  height: 40px;
+.profile-editor-photo button {
   display: grid;
   place-items: center;
   border: 1px solid var(--border-soft);
-  border-radius: 11px;
   color: var(--primary-text);
   background: var(--input-bg);
 }
 
+.profile-drawer header button {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
 .profile-editor {
   display: grid;
-  gap: 12px;
+  gap: 13px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
 }
 
 .profile-editor-photo {
-  display: flex;
-  align-items: center;
   gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--input-bg);
 }
 
 .profile-editor-photo .profile-avatar {
-  width: 68px;
-  height: 68px;
-  font-size: 22px;
+  width: 62px;
+  height: 62px;
+  flex: 0 0 auto;
+  font-size: 21px;
+}
+
+.profile-editor-photo div {
+  min-width: 0;
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.profile-editor-photo strong,
+.profile-editor-photo small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-editor-photo small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .profile-editor-photo input {
@@ -74,105 +118,99 @@
 }
 
 .profile-editor-photo button {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+}
+
+.profile-editor label {
   display: grid;
-  place-items: center;
-  border: 1px solid var(--border-soft);
-  border-radius: 12px;
-  color: var(--primary-text);
-  background: var(--input-bg);
+  gap: 7px;
+}
+
+.profile-editor label span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-editor input[readonly] {
+  opacity: 0.68;
 }
 
 .profile-save-button,
-.profile-logout-button {
+.profile-logout-button,
+.profile-animation-button {
   min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 0;
-  border-radius: 12px;
-  color: #ffffff;
-  background: linear-gradient(135deg, #18b8f5, #2563eb);
+  border-radius: 11px;
   font-weight: 900;
 }
 
-.profile-contact-section,
-.profile-contact-list,
-.profile-invite-list {
+.profile-animation-button {
+  justify-content: flex-start;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, #a855f7 34%, var(--border-soft));
+  color: var(--text);
+  background: color-mix(in srgb, var(--input-bg) 88%, #a855f7 12%);
+}
+
+.profile-animation-button > span {
+  width: 38px;
+  height: 38px;
   display: grid;
-  gap: 10px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border-soft);
+  place-items: center;
+  border-radius: 10px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #a855f7, #2563eb);
+  animation: profileAnimationPulse 1.8s ease-in-out infinite;
 }
 
-.profile-contact-section form {
-  display: grid;
-  grid-template-columns: 1fr 40px;
-  gap: 8px;
-}
-
-.profile-contact-section input {
-  height: 44px;
-}
-
-.profile-search-result,
-.profile-contact-list div,
-.profile-invite {
-  padding: 8px;
-  border: 1px solid var(--border-soft);
-  border-radius: 11px;
-  background: var(--input-bg);
-}
-
-.profile-search-result .profile-avatar,
-.profile-contact-list .profile-avatar,
-.profile-invite .profile-avatar {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  font-size: 12px;
-}
-
-.profile-search-result div,
-.profile-contact-list span,
-.profile-invite span {
+.profile-animation-button div {
   min-width: 0;
   display: grid;
   flex: 1;
+  gap: 2px;
+  text-align: left;
 }
 
-.profile-search-result small,
-.profile-contact-list small,
-.profile-contact-list p,
-.profile-invite-list p,
-.profile-invite small,
-.profile-drawer-message {
+.profile-animation-button small {
   color: var(--muted);
+  font-size: 11px;
+}
+
+.profile-animation-button > svg {
+  color: #a855f7;
+}
+
+.profile-save-button {
+  border: 0;
+  color: #ffffff;
+  background: linear-gradient(135deg, #18b8f5, #2563eb);
+}
+
+.profile-drawer-message,
+.profile-security-note {
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--input-bg);
   font-size: 12px;
   font-weight: 700;
 }
 
-.profile-search-result button,
-.profile-invite button,
-.profile-contact-list button {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border: 1px solid var(--border-soft);
-  border-radius: 10px;
-  color: var(--primary-text);
-  background: var(--surface);
+.profile-security-note {
+  gap: 7px;
 }
 
-.profile-drawer-message {
-  padding: 9px;
-  border: 1px solid var(--border-soft);
-  border-radius: 10px;
-  background: var(--input-bg);
+.profile-security-note svg {
+  flex: 0 0 auto;
+  color: #16a34a;
 }
 
 .profile-logout-button {
@@ -180,4 +218,18 @@
   color: #e11d48;
   border: 1px solid color-mix(in srgb, #e11d48 30%, var(--border-soft));
   background: var(--input-bg);
+}
+
+@keyframes profileDrawerIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+@keyframes profileAnimationPulse {
+  50% {
+    box-shadow: 0 0 17px rgba(168, 85, 247, 0.64);
+    transform: scale(1.05);
+  }
 }
