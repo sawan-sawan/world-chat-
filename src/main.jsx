@@ -225,7 +225,7 @@ socket.on("message:new", (message) => {
 
   function showJoinNotice(notice) {
     const animation = getEntryAnimation(entryAnimationIdRef.current);
-    const duration = animation.type === "video" ? 4200 : 2000;
+    const duration = animation.type === "video" ? 4200 : 4000;
 
     window.clearTimeout(joinNoticeTimerRef.current);
     setJoinNotice(notice);

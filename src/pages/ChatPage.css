@@ -880,7 +880,7 @@
 
   z-index: 999;
   pointer-events: none;
-  animation: joinOverlayFade 2s ease forwards;
+  animation: joinOverlayFade 4s ease forwards;
 }
 
 .join-media-bg {
@@ -925,7 +925,7 @@
     0 0 34px var(--entry-glow, rgba(37, 99, 235, 0.35)),
     0 18px 45px color-mix(in srgb, var(--entry-glow, rgba(37, 99, 235, 0.35)) 78%, transparent);
   transform: translate(-50%, -50%);
-  animation: joinPillPop 2s ease forwards;
+  animation: joinPillPop 4s ease forwards;
 }
 
 .join-animation-content {
