@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Plus, Search, UserPlus, UsersRound, X } from "lucide-react";
+import { Check, Plus, Search, Trash2, UserPlus, UsersRound, X } from "lucide-react";
 import ProfileAvatar from "./ProfileAvatar";
 import "./ContactsPanel.css";
 
@@ -9,6 +9,7 @@ export default function ContactsPanel({
   roomId,
   outgoingInvites,
   onClose,
+  onDeleteContact,
   onSearchAccount,
   onSendRoomInvite,
 }) {
@@ -102,6 +103,7 @@ export default function ContactsPanel({
               disabled={hasPendingInvite(contact.id)}
               sent={sentContactId === contact.id}
               key={contact.id}
+              onDelete={() => onDeleteContact(contact)}
               onInvite={() => sendInvite(contact)}
             />
           )) : <p className="contacts-empty">Your saved contacts will appear here.</p>}
@@ -113,7 +115,7 @@ export default function ContactsPanel({
   );
 }
 
-function ContactRow({ contact, disabled, sent, onInvite }) {
+function ContactRow({ contact, disabled, sent, onDelete, onInvite }) {
   return (
     <div className="contact-row">
       <ProfileAvatar name={contact.name} photoUrl={contact.photoUrl} />
@@ -124,6 +126,11 @@ function ContactRow({ contact, disabled, sent, onInvite }) {
       <button className={disabled ? "pending" : ""} type="button" title={disabled ? "Request waiting for response" : "Send room request"} disabled={disabled} onClick={onInvite}>
         {sent ? <Check size={16} /> : <Plus size={17} />}
       </button>
+      {onDelete ? (
+        <button className="delete" type="button" title={`Delete ${contact.name} contact`} onClick={onDelete}>
+          <Trash2 size={15} />
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -62,10 +62,6 @@
   font-weight: 600;
 }
 
-.auth-theme-btn {
-  justify-self: end;
-}
-
 .join-form {
   display: grid;
   gap: 18px;
@@ -202,11 +198,6 @@ label {
     grid-template-columns: auto 1fr;
   }
 
-  .auth-theme-btn {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    width: 100%;
-  }
 }
 
 @media (max-width: 460px) {

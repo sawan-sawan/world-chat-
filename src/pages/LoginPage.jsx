@@ -9,9 +9,6 @@ export default function LoginPage({
   name,
   profilePhoto,
   roomInput,
-  theme,
-  ThemeButton,
-  onToggleTheme,
   onGenerateRoom,
   onNameChange,
   onProfilePhotoChange,
@@ -33,9 +30,6 @@ export default function LoginPage({
             <p>Join a room and start chatting instantly with anyone, anywhere.</p>
           </div>
 
-          {ThemeButton ? (
-            <ThemeButton theme={theme} onToggleTheme={onToggleTheme} className="auth-theme-btn" />
-          ) : null}
         </div>
 
         <form className="join-form" onSubmit={onSubmit}>

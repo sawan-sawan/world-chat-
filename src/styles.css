@@ -233,6 +233,7 @@ input:focus {
 ================================ */
 
 :root[data-theme="light"] {
+  color-scheme: light;
   --app-bg: #eef4ff;
   --app-bg-2: #dcecff;
   --card-bg: #f8fafc;
@@ -264,6 +265,7 @@ input:focus {
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --app-bg: #020617;
   --app-bg-2: #0b1120;
   --card-bg: #020617;
@@ -318,7 +320,6 @@ body {
 
 /* Cards / panels */
 .login-card,
-.sidebar,
 .chat-panel,
 .chat-main,
 .chat-header,
@@ -539,4 +540,41 @@ textarea::placeholder {
   height: 100%;
   display: block;
   object-fit: cover;
+}
+
+/* Sidebar keeps its own high-contrast palette in both app themes. */
+.sidebar {
+  background: var(--sidebar-gradient) !important;
+  color: #ffffff !important;
+}
+
+.sidebar h1,
+.sidebar h2,
+.sidebar h3,
+.sidebar p,
+.sidebar strong {
+  color: #ffffff !important;
+}
+
+.sidebar .room-card h2,
+.sidebar .room-card p {
+  color: var(--heading) !important;
+}
+
+.sidebar .room-card .eyebrow,
+.sidebar .room-card .room-subtitle {
+  color: var(--muted) !important;
+}
+
+.sidebar .status,
+.sidebar-friends-heading span,
+.sidebar-profile-card small,
+.sidebar-friends-heading small,
+.sidebar-friends-list > p,
+.sidebar-friend small {
+  color: #dff7ff !important;
+}
+
+.sidebar-leave-button {
+  color: #ffe4e6 !important;
 }

@@ -160,6 +160,12 @@
   animation: contactInviteSpin 1.15s linear infinite;
 }
 
+.contact-row > button.delete {
+  color: #e11d48;
+  border-color: color-mix(in srgb, #e11d48 30%, var(--border-soft));
+  background: color-mix(in srgb, var(--input-bg) 90%, #ffe4e6 10%);
+}
+
 @keyframes contactInviteSpin {
   to {
     transform: rotate(360deg);

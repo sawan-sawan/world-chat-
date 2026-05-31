@@ -27,6 +27,18 @@ export default function RoomInviteBanner({ invite, onAccept, onDismiss }) {
 
   const progress = Math.max(0, Math.min(100, (remainingMs / INVITE_DURATION_MS) * 100));
 
+  function acceptInvite() {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    onAccept(invite);
+  }
+
+  function declineInvite() {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    onDismiss(invite, "declined");
+  }
+
   return (
     <section className="room-invite-banner" aria-label="Room request">
       <ProfileAvatar name={invite.fromName} photoUrl={invite.fromPhotoUrl} />
@@ -35,10 +47,10 @@ export default function RoomInviteBanner({ invite, onAccept, onDismiss }) {
         <strong>{invite.fromName} invited you</strong>
         <small>Join room {invite.roomId}? {Math.ceil(remainingMs / 1000)}s</small>
       </div>
-      <button className="room-invite-accept" type="button" title="Accept room request" onClick={() => onAccept(invite)}>
+      <button className="room-invite-accept" type="button" title="Accept room request" onClick={acceptInvite}>
         <Check size={19} />
       </button>
-      <button className="room-invite-decline" type="button" title="Decline room request" onClick={() => onDismiss(invite, "declined")}>
+      <button className="room-invite-decline" type="button" title="Decline room request" onClick={declineInvite}>
         <X size={18} />
       </button>
       <span className="room-invite-timeline" style={{ "--invite-progress": `${progress}%` }} />

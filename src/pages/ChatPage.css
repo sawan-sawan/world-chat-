@@ -350,6 +350,12 @@
   animation: contactInviteSpin 1.15s linear infinite;
 }
 
+.sidebar-friend button.delete {
+  color: #fecdd3;
+  border-color: rgba(251, 113, 133, 0.54);
+  background: rgba(190, 18, 60, 0.16);
+}
+
 .sidebar-leave-button {
   min-height: 45px;
   display: inline-flex;

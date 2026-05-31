@@ -7,6 +7,7 @@ import {
   limit,
   onSnapshot,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -15,7 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-const ROOM_INVITE_DURATION_MS = 5000;
+const OUTGOING_INVITE_FALLBACK_MS = 7000;
 
 export async function loadOrCreateProfile(user) {
   const profileRef = doc(db, "users", user.uid);
@@ -71,7 +72,7 @@ export async function searchStoredProfile(phone) {
 export async function sendStoredRoomInvite({ fromProfile, roomId, toProfile }) {
   const requestRef = doc(collection(db, "users", toProfile.id, "roomRequests"));
   const outgoingRef = doc(db, "users", fromProfile.id, "outgoingRequests", requestRef.id);
-  const expiresAt = new Date(Date.now() + ROOM_INVITE_DURATION_MS);
+  const expiresAt = new Date(Date.now() + OUTGOING_INVITE_FALLBACK_MS);
   const batch = writeBatch(db);
 
   batch.set(requestRef, {
@@ -111,17 +112,33 @@ export function subscribeStoredOutgoingInvites(uid, onChange, onError = () => {}
 
 export async function finishStoredRoomInvite(uid, invite, status) {
   const outgoingRef = doc(db, "users", invite.fromUid, "outgoingRequests", invite.id);
-  await deleteDoc(doc(db, "users", uid, "roomRequests", invite.id));
-  await updateDoc(outgoingRef, {
-    status,
-    respondedAt: serverTimestamp(),
-  }).catch(() => {});
+  try {
+    await updateDoc(outgoingRef, {
+      status,
+      respondedAt: serverTimestamp(),
+    });
+    await deleteDoc(doc(db, "users", uid, "roomRequests", invite.id));
+    return true;
+  } catch (error) {
+    if (error?.code === "not-found") {
+      await deleteDoc(doc(db, "users", uid, "roomRequests", invite.id));
+      return true;
+    }
+    return false;
+  }
 }
 
 export async function expireStoredOutgoingInvite(uid, requestId) {
-  await updateDoc(doc(db, "users", uid, "outgoingRequests", requestId), {
-    status: "expired",
-    respondedAt: serverTimestamp(),
+  const outgoingRef = doc(db, "users", uid, "outgoingRequests", requestId);
+  return runTransaction(db, async (transaction) => {
+    const outgoingSnapshot = await transaction.get(outgoingRef);
+    if (!outgoingSnapshot.exists() || outgoingSnapshot.data().status !== "pending") return false;
+
+    transaction.update(outgoingRef, {
+      status: "expired",
+      respondedAt: serverTimestamp(),
+    });
+    return true;
   });
 }
 
@@ -134,6 +151,10 @@ export async function saveStoredContact(uid, profile) {
     photoUrl: profile.photoUrl || "",
     createdAt: serverTimestamp(),
   });
+}
+
+export async function deleteStoredContact(uid, contactUid) {
+  await deleteDoc(doc(db, "users", uid, "contacts", contactUid));
 }
 
 export async function loadStoredContacts(uid) {

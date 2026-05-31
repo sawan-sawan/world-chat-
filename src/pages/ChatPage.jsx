@@ -64,6 +64,7 @@ export default function ChatPage({
   outgoingInvites,
   onAcceptRoomInvite,
   onDismissRoomInvite,
+  onDeleteContact,
   onLogoutAccount,
   onSearchAccount,
   onSendRoomInvite,
@@ -451,6 +452,9 @@ export default function ChatPage({
                   <button className={pending ? "pending" : ""} type="button" title={pending ? "Request waiting for response" : "Send room request"} disabled={pending} onClick={() => sendContactInvite(contact)}>
                     {sentContactId === contact.id ? <Check size={16} /> : <Plus size={16} />}
                   </button>
+                  <button className="delete" type="button" title={`Delete ${contact.name} contact`} onClick={() => onDeleteContact(contact)}>
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               );
             }) : <p>No saved friends yet.</p>}
@@ -754,6 +758,7 @@ export default function ChatPage({
           roomId={roomId}
           outgoingInvites={outgoingInvites}
           onClose={() => setContactsPanelOpen(false)}
+          onDeleteContact={onDeleteContact}
           onSearchAccount={onSearchAccount}
           onSendRoomInvite={onSendRoomInvite}
         />

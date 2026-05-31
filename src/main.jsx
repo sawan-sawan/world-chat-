@@ -11,6 +11,7 @@ import AccountAuthPage from "./pages/AccountAuthPage";
 import LoginPage from "./pages/LoginPage";
 import { auth } from "./lib/firebase";
 import {
+  deleteStoredContact,
   expireStoredOutgoingInvite,
   finishStoredRoomInvite,
   loadOrCreateProfile,
@@ -59,23 +60,6 @@ function timeLabel(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function ThemeButton({ theme, onToggleTheme, className = "" }) {
-  return (
-    <button
-      className={`theme-toggle-btn ${className}`.trim()}
-      type="button"
-      onClick={onToggleTheme}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-    >
-      <span className="theme-icon" aria-hidden="true">
-        {theme === "dark" ? "☀️" : "🌙"}
-      </span>
-      <span>{theme === "dark" ? "Light" : "Dark"}</span>
-    </button>
-  );
 }
 
 function App() {
@@ -493,6 +477,12 @@ socket.on("message:new", (message) => {
     setSavedContacts(await loadStoredContacts(accountUser.uid));
   }
 
+  async function deleteContact(contact) {
+    if (!accountUser || !contact?.id) return;
+    await deleteStoredContact(accountUser.uid, contact.id);
+    setSavedContacts(await loadStoredContacts(accountUser.uid));
+  }
+
   async function acceptRoomInvite(invite) {
     if (!accountUser) return;
     await saveStoredContact(accountUser.uid, {
@@ -501,7 +491,11 @@ socket.on("message:new", (message) => {
       username: invite.fromUsername,
       photoUrl: invite.fromPhotoUrl,
     });
-    await finishStoredRoomInvite(accountUser.uid, invite, "accepted");
+    const accepted = await finishStoredRoomInvite(accountUser.uid, invite, "accepted");
+    if (!accepted) {
+      setError("Room request expire ho chuki hai. Sender se request dobara bhejne ko kahe.");
+      return;
+    }
     setSavedContacts(await loadStoredContacts(accountUser.uid));
     leaveRoom();
     enterRoom(invite.roomId);
@@ -544,9 +538,6 @@ socket.on("message:new", (message) => {
         name={name}
         profilePhoto={profilePhoto}
         roomInput={roomInput}
-        theme={theme}
-        ThemeButton={ThemeButton}
-        onToggleTheme={toggleTheme}
         onGenerateRoom={() => setRoomInput(randomRoom())}
         onNameChange={setName}
         onProfilePhotoChange={changeProfilePhoto}
@@ -571,7 +562,6 @@ socket.on("message:new", (message) => {
       roomId={roomId}
       roomStatus={roomStatus}
       theme={theme}
-      ThemeButton={ThemeButton}
       typingText={typingText}
       onCopyInvite={copyInvite}
       onDraftChange={updateDraft}
@@ -590,6 +580,7 @@ socket.on("message:new", (message) => {
       outgoingInvites={outgoingInvites}
       onAcceptRoomInvite={acceptRoomInvite}
       onDismissRoomInvite={dismissRoomInvite}
+      onDeleteContact={deleteContact}
       onLogoutAccount={logoutAccount}
       onSearchAccount={searchAccount}
       onSendRoomInvite={sendRoomInvite}
