@@ -225,29 +225,63 @@ input:focus {
 
 :root[data-theme="light"] {
   --app-bg: #eef4ff;
+  --app-bg-2: #dcecff;
   --card-bg: #ffffff;
   --card-soft: #f8fbff;
+  --surface: #ffffff;
+  --input-bg: #f8fbff;
   --text-main: #0f172a;
   --text-soft: #475569;
   --text-muted: #64748b;
+  --text: #0f172a;
+  --heading: #0f172a;
+  --muted: #64748b;
+  --muted-strong: #475569;
+  --primary: #2563eb;
+  --primary-soft: #18b8f5;
+  --primary-text: #1d4ed8;
+  --border: #cbd8e8;
   --border-soft: #d8e2f0;
   --bubble-me: #2563eb;
   --bubble-other: #ffffff;
   --bubble-other-border: #dbe5f3;
+  --message-bg: #ffffff;
+  --message-mine: #e9f2ff;
+  --message-system: #f1f5f9;
+  --chat-pattern-overlay: rgba(238, 244, 255, 0.78);
+  --sidebar-gradient: linear-gradient(160deg, #075985, #1d4ed8);
+  --shadow-blue: rgba(37, 99, 235, 0.2);
   --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
 :root[data-theme="dark"] {
   --app-bg: #020617;
+  --app-bg-2: #0b1120;
   --card-bg: #0f172a;
   --card-soft: #111827;
+  --surface: #0f172a;
+  --input-bg: #111827;
   --text-main: #f8fafc;
   --text-soft: #cbd5e1;
   --text-muted: #94a3b8;
+  --text: #f8fafc;
+  --heading: #ffffff;
+  --muted: #94a3b8;
+  --muted-strong: #cbd5e1;
+  --primary: #38bdf8;
+  --primary-soft: #2563eb;
+  --primary-text: #7dd3fc;
+  --border: #334155;
   --border-soft: #263449;
   --bubble-me: #2563eb;
   --bubble-other: #111827;
   --bubble-other-border: #334155;
+  --message-bg: #111827;
+  --message-mine: #172554;
+  --message-system: #1e293b;
+  --chat-pattern-overlay: rgba(2, 6, 23, 0.78);
+  --sidebar-gradient: linear-gradient(160deg, #0f172a, #172554);
+  --shadow-blue: rgba(2, 6, 23, 0.55);
   --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.35);
 }
 

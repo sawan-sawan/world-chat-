@@ -1,14 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import Lottie from "lottie-react";
 import confettiAnimation from "../assets/confetti.json";
 import {
   CheckCheck,
   Copy,
+  Hash,
   LogOut,
+  Menu,
   Send,
   Sparkles,
+  Users,
   Wifi,
   WifiOff,
+  X,
 } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
 import "./ChatPage.css";
@@ -37,8 +41,96 @@ export default function ChatPage({
   timeLabel,
   joinNotice,
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <main className="chat-layout">
+      <header className="mobile-topbar">
+        <div className="mobile-brand">
+          <span className="brand-mark mobile">
+            <LogoIcon size={21} />
+          </span>
+          <span>talknesty</span>
+        </div>
+
+        <button
+          className="mobile-menu-button"
+          type="button"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-chat-menu"
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          title={mobileMenuOpen ? "Close menu" : "Open menu"}
+          onClick={() => setMobileMenuOpen((current) => !current)}
+        >
+          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </header>
+
+      {mobileMenuOpen ? (
+        <>
+          <button
+            className="mobile-menu-backdrop"
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <section className="mobile-menu" id="mobile-chat-menu">
+            <div className="mobile-menu-section">
+              <h3><Hash size={16} /> Room details</h3>
+              <div className="mobile-room-row">
+                <div>
+                  <strong>{roomId}</strong>
+                  <span>{onlineCount} online now</span>
+                </div>
+                <button className="mobile-action-button" type="button" title="Copy invite" onClick={onCopyInvite}>
+                  <Copy size={17} />
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="mobile-menu-section">
+              <h3>{connection === "online" ? <Wifi size={16} /> : <WifiOff size={16} />} Connection</h3>
+              <p className={`mobile-connection ${connection}`}>
+                <span />
+                {connection === "online"
+                  ? "You are online"
+                  : connection === "connecting"
+                  ? "Connecting"
+                  : "You are offline"}
+              </p>
+            </div>
+
+            <div className="mobile-menu-section">
+              <h3><Users size={16} /> People</h3>
+              <div className="mobile-people">
+                {contacts.map((user) => (
+                  <div className={`mobile-person ${user.status}`} key={user.id}>
+                    <span className="person-avatar" style={{ background: user.color }}>
+                      {user.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <div>
+                      <p>{user.id === currentUserId ? "You" : user.name}</p>
+                      <small>{user.status === "online" ? "Online" : "Offline"}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mobile-menu-actions">
+              {ThemeButton ? (
+                <ThemeButton theme={theme} onToggleTheme={onToggleTheme} className="mobile-theme-btn" />
+              ) : null}
+              <button className="mobile-leave-button" type="button" onClick={onLeaveRoom}>
+                <LogOut size={17} />
+                Leave room
+              </button>
+            </div>
+          </section>
+        </>
+      ) : null}
+
       <aside className="sidebar">
         <div className="sidebar-topbar">
           <div className="sidebar-brand">
