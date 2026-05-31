@@ -66,7 +66,7 @@ export default function ChatPage({
   const recordingStartedAtRef = useRef(0);
   const recordingTimerRef = useRef(null);
   const shouldSendVoiceRef = useRef(false);
-  const entryAnimation = getEntryAnimation(entryAnimationId);
+  const entryAnimation = getEntryAnimation(joinNotice?.animationId || entryAnimationId);
 
   useEffect(() => {
     return () => stopRecording(false);
@@ -185,8 +185,8 @@ export default function ChatPage({
       return;
     }
 
-    if (file.size > 9_000_000) {
-      setRecordingError("Photo ya video 9 MB se chhota hona chahiye.");
+    if (file.size > 20_000_000) {
+      setRecordingError("Photo ya video 20 MB se chhota hona chahiye.");
       return;
     }
 
@@ -378,7 +378,10 @@ export default function ChatPage({
           <EntryAnimationsPage
             selectedAnimationId={entryAnimationId}
             onBack={() => setActiveView("chat")}
-            onSelectAnimation={onSelectEntryAnimation}
+            onSelectAnimation={(animationId) => {
+              onSelectEntryAnimation(animationId);
+              setActiveView("chat");
+            }}
           />
         ) : (
           <>
@@ -398,7 +401,11 @@ export default function ChatPage({
 
     <div className="join-animation">
       <div className="join-animation-content">
-        {joinNotice.isMe ? (
+        {joinNotice.preview ? (
+          <>
+            ✨ <span>{joinNotice.isMe ? "Your" : `${joinNotice.name}'s`}</span> entry animation
+          </>
+        ) : joinNotice.isMe ? (
           <>
             🚀 <span>You</span> have entered the chat
           </>
@@ -441,6 +448,28 @@ export default function ChatPage({
             <CheckCheck size={18} />
             {connection === "online" ? "Live sync" : "Offline"}
           </div>
+
+          {contacts.length > 2 ? (
+            <div className="mobile-live-people" aria-label="Room participants">
+              {contacts.map((user) =>
+                user.photoUrl ? (
+                  <button
+                    className={`mobile-live-person ${user.status}`}
+                    type="button"
+                    title={`${user.name} is ${user.status}`}
+                    key={user.id}
+                    onClick={() => setProfilePreview(user)}
+                  >
+                    <ProfileAvatar name={user.name} color={user.color} photoUrl={user.photoUrl} />
+                  </button>
+                ) : (
+                  <span className={`mobile-live-person ${user.status}`} title={`${user.name} is ${user.status}`} key={user.id}>
+                    <ProfileAvatar name={user.name} color={user.color} />
+                  </span>
+                )
+              )}
+            </div>
+          ) : null}
         </header>
 
         {error ? <p className="error inline">{error}</p> : null}

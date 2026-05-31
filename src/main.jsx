@@ -145,7 +145,10 @@ function App() {
 
     socket.on("connect", () => {
       setConnection("online");
-      socket.emit("room:join", session);
+      socket.emit("room:join", {
+        ...session,
+        entryAnimationId: entryAnimationIdRef.current,
+      });
     });
 
     socket.on("disconnect", () => setConnection("offline"));
@@ -166,6 +169,7 @@ socket.on("room:history", ({ messages: history, users: roomUsers }) => {
     id: `self-${Date.now()}`,
     name: session.name,
     isMe: true,
+    animationId: entryAnimationIdRef.current,
   });
 });
 
@@ -189,9 +193,20 @@ socket.on("message:new", (message) => {
       id: Date.now(),
       name: joinedName,
       isMe,
+      animationId: message.entryAnimationId,
     });
   }
 });
+
+    socket.on("entry-animation:show", ({ id, clientId: senderId, name: senderName, animationId }) => {
+      showJoinNotice({
+        id,
+        name: senderName,
+        isMe: senderId === currentUserId,
+        animationId,
+        preview: true,
+      });
+    });
 
     socket.on("presence:update", (roomUsers) => {
       setUsers(roomUsers || []);
@@ -234,6 +249,19 @@ socket.on("message:new", (message) => {
   function selectEntryAnimation(animationId) {
     localStorage.setItem("talknesty-entry-animation", animationId);
     setEntryAnimationId(animationId);
+    entryAnimationIdRef.current = animationId;
+
+    if (socketRef.current?.connected) {
+      socketRef.current.emit("entry-animation:select", { animationId });
+    } else {
+      showJoinNotice({
+        id: `self-${Date.now()}`,
+        name: session?.name || name,
+        isMe: true,
+        animationId,
+        preview: true,
+      });
+    }
   }
 
   function joinRoom(event) {
@@ -316,8 +344,8 @@ socket.on("message:new", (message) => {
     }
 
     const mediaUrl = await blobToDataUrl(file);
-    if (mediaUrl.length > 12_500_000) {
-      setError("Photo ya video ka size zyada hai. Chhoti file choose karein.");
+    if (mediaUrl.length > 28_000_000) {
+      setError("Photo ya video ka size zyada hai. Video 20 MB se chhota choose karein.");
       return false;
     }
 

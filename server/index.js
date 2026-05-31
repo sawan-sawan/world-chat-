@@ -13,15 +13,31 @@ const io = new Server(httpServer, {
     origin: CLIENT_ORIGIN,
     methods: ["GET", "POST"],
   },
-  maxHttpBufferSize: 14_000_000,
+  maxHttpBufferSize: 30_000_000,
 });
 
 const rooms = new Map();
 const MAX_VOICE_DATA_LENGTH = 2_500_000;
 const MAX_VOICE_DURATION_MS = 30_000;
-const MAX_MEDIA_DATA_LENGTH = 12_500_000;
+const MAX_MEDIA_DATA_LENGTH = 28_000_000;
 const MAX_PROFILE_PHOTO_LENGTH = 500_000;
 const MEDIA_EXPIRY_MS = 60 * 60 * 1000;
+const DEFAULT_ENTRY_ANIMATION_ID = "classic-confetti";
+const ENTRY_ANIMATION_IDS = new Set([
+  "classic-confetti",
+  "quick-burst",
+  "soft-celebration",
+  "legendary-aura-one",
+  "legendary-aura-two",
+  "legendary-aura-three",
+  "legendary-aura-four",
+  "legendary-aura-five",
+  "legendary-aura-six",
+  "legendary-aura-seven",
+  "legendary-aura-eight",
+  "legendary-aura-nine",
+  "legendary-aura-ten",
+]);
 
 function getRoom(roomId) {
   if (!rooms.has(roomId)) {
@@ -38,11 +54,12 @@ function roomUsers(roomId) {
   const room = rooms.get(roomId);
   if (!room) return [];
 
-  return Array.from(room.users.values()).map(({ id, name, color, photoUrl }) => ({
+  return Array.from(room.users.values()).map(({ id, name, color, photoUrl, entryAnimationId }) => ({
     id,
     name,
     color,
     photoUrl,
+    entryAnimationId,
   }));
 }
 
@@ -66,6 +83,12 @@ function cleanProfilePhoto(photoUrl) {
   return safePhotoUrl;
 }
 
+function cleanEntryAnimationId(animationId) {
+  return ENTRY_ANIMATION_IDS.has(animationId)
+    ? animationId
+    : DEFAULT_ENTRY_ANIMATION_ID;
+}
+
 const cleanupTimer = setInterval(() => {
   rooms.forEach((room) => cleanExpiredMessages(room));
 }, 5 * 60 * 1000);
@@ -83,6 +106,7 @@ function makeMessage({
   mediaKind = "",
   fileName = "",
   expiresAt = "",
+  entryAnimationId = "",
 }) {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -97,17 +121,19 @@ function makeMessage({
     mediaKind,
     fileName,
     expiresAt,
+    entryAnimationId,
     createdAt: new Date().toISOString(),
   };
 }
 
 io.on("connection", (socket) => {
-  socket.on("room:join", ({ roomId, name, color, clientId, photoUrl }) => {
+  socket.on("room:join", ({ roomId, name, color, clientId, photoUrl, entryAnimationId }) => {
     const safeRoomId = String(roomId || "").trim().slice(0, 32);
     const safeName = String(name || "Guest").trim().slice(0, 28);
     const safeColor = String(color || "#0f766e").trim().slice(0, 20);
     const safeClientId = String(clientId || socket.id).trim().slice(0, 80);
     const safePhotoUrl = cleanProfilePhoto(photoUrl);
+    const safeEntryAnimationId = cleanEntryAnimationId(entryAnimationId);
 
     if (!safeRoomId) {
       socket.emit("room:error", "Room code is required.");
@@ -119,6 +145,7 @@ io.on("connection", (socket) => {
     socket.data.color = safeColor;
     socket.data.clientId = safeClientId;
     socket.data.photoUrl = safePhotoUrl;
+    socket.data.entryAnimationId = safeEntryAnimationId;
     socket.join(safeRoomId);
 
     const room = getRoom(safeRoomId);
@@ -132,6 +159,7 @@ io.on("connection", (socket) => {
       name: safeName,
       color: safeColor,
       photoUrl: safePhotoUrl,
+      entryAnimationId: safeEntryAnimationId,
     });
 
     if (existingUser?.socketId && existingUser.socketId !== socket.id) {
@@ -152,10 +180,32 @@ io.on("connection", (socket) => {
         sender: { id: "system", name: "World Chat", color: "#475569" },
         text: `${safeName} joined the room.`,
         system: true,
+        entryAnimationId: safeEntryAnimationId,
       }));
     }
 
     io.to(safeRoomId).emit("presence:update", roomUsers(safeRoomId));
+  });
+
+  socket.on("entry-animation:select", ({ animationId }) => {
+    const roomId = socket.data.roomId;
+    const room = roomId ? rooms.get(roomId) : null;
+    if (!room) return;
+
+    const clientId = socket.data.clientId || socket.id;
+    const entryAnimationId = cleanEntryAnimationId(animationId);
+    const user = room.users.get(clientId);
+
+    socket.data.entryAnimationId = entryAnimationId;
+    if (user) user.entryAnimationId = entryAnimationId;
+
+    io.to(roomId).emit("presence:update", roomUsers(roomId));
+    io.to(roomId).emit("entry-animation:show", {
+      id: `${Date.now()}-${clientId}`,
+      clientId,
+      name: socket.data.name || "Guest",
+      animationId: entryAnimationId,
+    });
   });
 
   socket.on("message:send", ({ text }) => {
