@@ -86,6 +86,10 @@
   color: #9333ea !important;
 }
 
+.entry-tier-legendary .entry-tier-label {
+  color: #eab308 !important;
+}
+
 .entry-catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));

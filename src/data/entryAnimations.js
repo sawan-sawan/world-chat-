@@ -1,4 +1,11 @@
 import confettiAnimation from "../assets/confetti.json";
+import legendaryAuraOne from "../assets/File 00001.json";
+import legendaryAuraTwo from "../assets/File 00002.json";
+import legendaryAuraThree from "../assets/File 00003.json";
+import legendaryAuraFour from "../assets/File 00004.json";
+import legendaryAuraFive from "../assets/File 00005.json";
+import legendaryAuraSix from "../assets/File 00006.json";
+import legendaryAuraSeven from "../assets/File 00007.json";
 import premiumMotionOne from "../assets/entry-videos/mp1.MP4";
 import premiumMotionTwo from "../assets/entry-videos/mp2.MP4";
 import premiumMotionThree from "../assets/entry-videos/mp3.MP4";
@@ -119,6 +126,83 @@ export const ENTRY_ANIMATIONS = [
     playbackRate: 2,
     gradient: "linear-gradient(135deg, #facc15, #e11d48)",
     glow: "rgba(250, 204, 21, 0.5)",
+  },
+  {
+    id: "legendary-aura-one",
+    type: "lottie",
+    name: "Legendary Aura 01",
+    description: "A radiant legendary entrance with a focused energy reveal.",
+    tier: "legendary",
+    animationData: legendaryAuraOne,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #f59e0b, #e11d48)",
+    glow: "rgba(245, 158, 11, 0.56)",
+  },
+  {
+    id: "legendary-aura-two",
+    type: "lottie",
+    name: "Legendary Aura 02",
+    description: "A sharp legendary motion burst with an electric finish.",
+    tier: "legendary",
+    animationData: legendaryAuraTwo,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #22d3ee, #2563eb)",
+    glow: "rgba(34, 211, 238, 0.56)",
+  },
+  {
+    id: "legendary-aura-three",
+    type: "lottie",
+    name: "Legendary Aura 03",
+    description: "A vivid legendary animation for a high-impact arrival.",
+    tier: "legendary",
+    animationData: legendaryAuraThree,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #a855f7, #ec4899)",
+    glow: "rgba(168, 85, 247, 0.58)",
+  },
+  {
+    id: "legendary-aura-four",
+    type: "lottie",
+    name: "Legendary Aura 04",
+    description: "A warm legendary flare designed for a bold entrance.",
+    tier: "legendary",
+    animationData: legendaryAuraFour,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #fb7185, #ea580c)",
+    glow: "rgba(251, 113, 133, 0.56)",
+  },
+  {
+    id: "legendary-aura-five",
+    type: "lottie",
+    name: "Legendary Aura 05",
+    description: "A refined legendary reveal with a luminous green finish.",
+    tier: "legendary",
+    animationData: legendaryAuraFive,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #34d399, #0f766e)",
+    glow: "rgba(52, 211, 153, 0.56)",
+  },
+  {
+    id: "legendary-aura-six",
+    type: "lottie",
+    name: "Legendary Aura 06",
+    description: "A dramatic legendary sequence with an intense glow.",
+    tier: "legendary",
+    animationData: legendaryAuraSix,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #facc15, #7c3aed)",
+    glow: "rgba(250, 204, 21, 0.58)",
+  },
+  {
+    id: "legendary-aura-seven",
+    type: "lottie",
+    name: "Legendary Aura 07",
+    description: "A signature legendary entrance with a cosmic finish.",
+    tier: "legendary",
+    animationData: legendaryAuraSeven,
+    speed: 1,
+    gradient: "linear-gradient(135deg, #60a5fa, #7c3aed)",
+    glow: "rgba(96, 165, 250, 0.58)",
   },
 ];
 

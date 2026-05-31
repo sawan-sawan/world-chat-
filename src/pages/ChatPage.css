@@ -880,6 +880,7 @@
 
   z-index: 999;
   pointer-events: none;
+  animation: joinOverlayFade 2s ease forwards;
 }
 
 .join-media-bg {
@@ -903,6 +904,8 @@
 
 .join-animation {
   position: absolute;
+  top: calc(50% + 118px);
+  left: 50%;
 
   width: 170px;
   min-height: 58px;
@@ -921,6 +924,8 @@
   box-shadow:
     0 0 34px var(--entry-glow, rgba(37, 99, 235, 0.35)),
     0 18px 45px color-mix(in srgb, var(--entry-glow, rgba(37, 99, 235, 0.35)) 78%, transparent);
+  transform: translate(-50%, -50%);
+  animation: joinPillPop 2s ease forwards;
 }
 
 .join-animation-content {
@@ -942,6 +947,10 @@
   animation-duration: 4.2s;
 }
 
+.join-overlay.entry-media-video {
+  animation-duration: 4.2s;
+}
+
 .entry-style-quick-burst .join-media-bg {
   width: 230px;
   height: 230px;
@@ -951,6 +960,39 @@
   width: 330px;
   height: 330px;
   opacity: 0.78;
+}
+
+@keyframes joinPillPop {
+  0% {
+    transform: translate(-50%, -38%) scale(0.86);
+  }
+
+  16% {
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+
+  76% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    transform: translate(-50%, -58%) scale(0.96);
+  }
+}
+
+@keyframes joinOverlayFade {
+  0% {
+    opacity: 0;
+  }
+
+  14%,
+  76% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes joinTopPop {
@@ -999,6 +1041,7 @@
 
 @media (max-width: 700px) {
   .join-animation {
+    top: calc(50% + 102px);
     width: clamp(140px, 52vw, 175px);
     min-height: 54px;
   }

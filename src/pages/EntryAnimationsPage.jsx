@@ -20,6 +20,11 @@ const CATALOG_SECTIONS = [
     name: "VIP",
     description: "Exclusive statement entrances for VIP profiles.",
   },
+  {
+    id: "legendary",
+    name: "Legendary",
+    description: "Rare animated entrances built for unforgettable room joins.",
+  },
 ];
 
 export default function EntryAnimationsPage({
