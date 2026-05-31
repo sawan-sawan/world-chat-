@@ -70,6 +70,7 @@ function App() {
   const [clientId] = useState(() => initialProfile.clientId || getClientId());
   const [showIntro, setShowIntro] = useState(true);
   const [name, setName] = useState(initialProfile.name || "");
+  const [profilePhoto, setProfilePhoto] = useState(initialProfile.photoUrl || "");
   const [roomInput, setRoomInput] = useState(initialProfile.roomId || randomRoom());
   const [color] = useState(initialProfile.color || COLORS[0]);
   const [session, setSession] = useState(null);
@@ -255,10 +256,31 @@ socket.on("message:new", (message) => {
       roomId: cleanRoom,
       color,
       clientId,
+      photoUrl: profilePhoto,
     };
 
     localStorage.setItem("talknesty-profile", JSON.stringify(nextSession));
     setSession(nextSession);
+  }
+
+  async function updateProfilePhoto(file) {
+    if (!file) {
+      setProfilePhoto("");
+      setError("");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Profile picture ke liye image file choose karein.");
+      return;
+    }
+
+    try {
+      setProfilePhoto(await resizeProfilePhoto(file));
+      setError("");
+    } catch {
+      setError("Profile picture load nahi hui. Dusri image try karein.");
+    }
   }
 
   function sendMessage(event) {
@@ -355,12 +377,14 @@ socket.on("message:new", (message) => {
       <LoginPage
         error={error}
         name={name}
+        profilePhoto={profilePhoto}
         roomInput={roomInput}
         theme={theme}
         ThemeButton={ThemeButton}
         onToggleTheme={toggleTheme}
         onGenerateRoom={() => setRoomInput(randomRoom())}
         onNameChange={setName}
+        onProfilePhotoChange={updateProfilePhoto}
         onRoomChange={setRoomInput}
         onSubmit={joinRoom}
       />
@@ -405,6 +429,39 @@ function blobToDataUrl(blob) {
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
+  });
+}
+
+async function resizeProfilePhoto(file) {
+  const sourceUrl = await blobToDataUrl(file);
+  const image = await loadImage(sourceUrl);
+  const size = Math.min(image.naturalWidth, image.naturalHeight);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  canvas.width = 240;
+  canvas.height = 240;
+  context.drawImage(
+    image,
+    (image.naturalWidth - size) / 2,
+    (image.naturalHeight - size) / 2,
+    size,
+    size,
+    0,
+    0,
+    240,
+    240
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.78);
+}
+
+function loadImage(sourceUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = sourceUrl;
   });
 }
 

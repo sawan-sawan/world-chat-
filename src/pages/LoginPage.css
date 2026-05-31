@@ -71,6 +71,60 @@
   gap: 18px;
 }
 
+.profile-photo-field {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--input-bg);
+}
+
+.login-profile-avatar {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  font-size: 19px;
+}
+
+.profile-photo-field div {
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-photo-field strong {
+  color: var(--heading);
+  font-size: 14px;
+}
+
+.profile-photo-field p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-photo-input {
+  display: none;
+}
+
+.profile-photo-action {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  color: var(--primary-text);
+  background: var(--surface);
+}
+
+.profile-photo-action.remove {
+  color: #e11d48;
+}
+
 label {
   display: grid;
   gap: 8px;

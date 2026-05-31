@@ -20,6 +20,7 @@ const rooms = new Map();
 const MAX_VOICE_DATA_LENGTH = 2_500_000;
 const MAX_VOICE_DURATION_MS = 30_000;
 const MAX_MEDIA_DATA_LENGTH = 12_500_000;
+const MAX_PROFILE_PHOTO_LENGTH = 500_000;
 const MEDIA_EXPIRY_MS = 60 * 60 * 1000;
 
 function getRoom(roomId) {
@@ -37,10 +38,11 @@ function roomUsers(roomId) {
   const room = rooms.get(roomId);
   if (!room) return [];
 
-  return Array.from(room.users.values()).map(({ id, name, color }) => ({
+  return Array.from(room.users.values()).map(({ id, name, color, photoUrl }) => ({
     id,
     name,
     color,
+    photoUrl,
   }));
 }
 
@@ -49,6 +51,19 @@ function cleanExpiredMessages(room) {
   room.messages = room.messages.filter(
     (message) => !message.expiresAt || new Date(message.expiresAt).getTime() > now
   );
+}
+
+function cleanProfilePhoto(photoUrl) {
+  const safePhotoUrl = String(photoUrl || "");
+
+  if (
+    !safePhotoUrl.startsWith("data:image/") ||
+    safePhotoUrl.length > MAX_PROFILE_PHOTO_LENGTH
+  ) {
+    return "";
+  }
+
+  return safePhotoUrl;
 }
 
 const cleanupTimer = setInterval(() => {
@@ -87,11 +102,12 @@ function makeMessage({
 }
 
 io.on("connection", (socket) => {
-  socket.on("room:join", ({ roomId, name, color, clientId }) => {
+  socket.on("room:join", ({ roomId, name, color, clientId, photoUrl }) => {
     const safeRoomId = String(roomId || "").trim().slice(0, 32);
     const safeName = String(name || "Guest").trim().slice(0, 28);
     const safeColor = String(color || "#0f766e").trim().slice(0, 20);
     const safeClientId = String(clientId || socket.id).trim().slice(0, 80);
+    const safePhotoUrl = cleanProfilePhoto(photoUrl);
 
     if (!safeRoomId) {
       socket.emit("room:error", "Room code is required.");
@@ -102,6 +118,7 @@ io.on("connection", (socket) => {
     socket.data.name = safeName;
     socket.data.color = safeColor;
     socket.data.clientId = safeClientId;
+    socket.data.photoUrl = safePhotoUrl;
     socket.join(safeRoomId);
 
     const room = getRoom(safeRoomId);
@@ -114,6 +131,7 @@ io.on("connection", (socket) => {
       socketId: socket.id,
       name: safeName,
       color: safeColor,
+      photoUrl: safePhotoUrl,
     });
 
     if (existingUser?.socketId && existingUser.socketId !== socket.id) {
@@ -158,6 +176,7 @@ io.on("connection", (socket) => {
         id: socket.data.clientId || socket.id,
         name: socket.data.name || "Guest",
         color: socket.data.color || "#0f766e",
+        photoUrl: socket.data.photoUrl || "",
       },
       text: cleanText,
     });
@@ -195,6 +214,7 @@ io.on("connection", (socket) => {
         id: socket.data.clientId || socket.id,
         name: socket.data.name || "Guest",
         color: socket.data.color || "#0f766e",
+        photoUrl: socket.data.photoUrl || "",
       },
       text: "Voice message",
       type: "voice",
@@ -237,6 +257,7 @@ io.on("connection", (socket) => {
         id: socket.data.clientId || socket.id,
         name: socket.data.name || "Guest",
         color: socket.data.color || "#0f766e",
+        photoUrl: socket.data.photoUrl || "",
       },
       text: safeMediaKind === "video" ? "Video" : "Photo",
       type: "media",

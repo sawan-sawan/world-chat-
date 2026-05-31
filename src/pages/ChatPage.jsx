@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
+import ProfileAvatar from "../components/ProfileAvatar";
 import EntryMedia from "../components/EntryMedia";
 import VoiceMessagePlayer from "../components/VoiceMessagePlayer";
 import { getEntryAnimation } from "../data/entryAnimations";
@@ -268,9 +269,7 @@ export default function ChatPage({
               <div className="mobile-people">
                 {contacts.map((user) => (
                   <div className={`mobile-person ${user.status}`} key={user.id}>
-                    <span className="person-avatar" style={{ background: user.color }}>
-                      {user.name.slice(0, 1).toUpperCase()}
-                    </span>
+                    <ProfileAvatar className="person-avatar" name={user.name} color={user.color} photoUrl={user.photoUrl} />
                     <div>
                       <p>{user.id === currentUserId ? "You" : user.name}</p>
                       <small>{user.status === "online" ? "Online" : "Offline"}</small>
@@ -339,9 +338,7 @@ export default function ChatPage({
 
           {contacts.map((user) => (
             <div className={`person ${user.status}`} key={user.id}>
-              <span className="person-avatar" style={{ background: user.color }}>
-                {user.name.slice(0, 1).toUpperCase()}
-              </span>
+              <ProfileAvatar className="person-avatar" name={user.name} color={user.color} photoUrl={user.photoUrl} />
 
               <div>
                 <p className="user-name">{user.id === currentUserId ? "You" : user.name}</p>
@@ -404,9 +401,13 @@ export default function ChatPage({
 ) : null} 
         <header className="chat-header">
           <div className="chat-title">
-            <span className="chat-mark">
-              <Sparkles size={20} />
-            </span>
+            {primaryContact ? (
+              <ProfileAvatar className="chat-mark" name={primaryContact.name} color={primaryContact.color} photoUrl={primaryContact.photoUrl} />
+            ) : (
+              <span className="chat-mark">
+                <Sparkles size={20} />
+              </span>
+            )}
 
             <div>
               <p className="eyebrow">Realtime chat</p>
@@ -433,9 +434,12 @@ export default function ChatPage({
                 key={message.id}
               >
                 {!message.system ? (
-                  <div className="avatar" style={{ background: message.sender.color }}>
-                    {message.sender.name.slice(0, 1).toUpperCase()}
-                  </div>
+                  <ProfileAvatar
+                    className="avatar"
+                    name={message.sender.name}
+                    color={message.sender.color}
+                    photoUrl={message.sender.photoUrl}
+                  />
                 ) : null}
 
                 <div className="bubble">

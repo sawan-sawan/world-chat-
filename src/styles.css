@@ -524,3 +524,19 @@ textarea::placeholder {
 :root[data-theme="dark"] .participant-name {
   color: #ffffff !important;
 }
+/* Shared avatar keeps profile photos consistent across login and chat surfaces. */
+.profile-avatar {
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
