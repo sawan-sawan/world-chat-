@@ -882,7 +882,7 @@
   pointer-events: none;
 }
 
-.join-lottie-bg {
+.join-media-bg {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -893,6 +893,12 @@
   z-index: 1;
   opacity: 0.95;
   transform: translate(-50%, -50%);
+}
+
+.join-media-bg.video {
+  width: min(560px, 92%);
+  height: min(560px, 92%);
+  object-fit: contain;
 }
 
 .join-animation {
@@ -911,8 +917,10 @@
 
   border-radius: 999px;
 
-  background: linear-gradient(135deg, #18b8f5, #2563eb);
-  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.35);
+  background: var(--entry-gradient, linear-gradient(135deg, #18b8f5, #2563eb));
+  box-shadow:
+    0 0 34px var(--entry-glow, rgba(37, 99, 235, 0.35)),
+    0 18px 45px color-mix(in srgb, var(--entry-glow, rgba(37, 99, 235, 0.35)) 78%, transparent);
 }
 
 .join-animation-content {
@@ -930,25 +938,19 @@
   font-weight: 900;
 }
 
-.entry-style-quick-burst .join-lottie-bg {
+.join-overlay.entry-media-video .join-animation {
+  animation-duration: 4.2s;
+}
+
+.entry-style-quick-burst .join-media-bg {
   width: 230px;
   height: 230px;
 }
 
-.entry-style-quick-burst .join-animation {
-  background: linear-gradient(135deg, #f97316, #e11d48);
-  box-shadow: 0 18px 45px rgba(225, 29, 72, 0.3);
-}
-
-.entry-style-soft-celebration .join-lottie-bg {
+.entry-style-soft-celebration .join-media-bg {
   width: 330px;
   height: 330px;
   opacity: 0.78;
-}
-
-.entry-style-soft-celebration .join-animation {
-  background: linear-gradient(135deg, #10b981, #0f766e);
-  box-shadow: 0 18px 45px rgba(15, 118, 110, 0.3);
 }
 
 @keyframes joinTopPop {
@@ -1001,7 +1003,7 @@
     min-height: 54px;
   }
 
-  .join-lottie-bg {
+  .join-media-bg {
     width: clamp(210px, 78vw, 280px);
     height: clamp(210px, 78vw, 280px);
   }

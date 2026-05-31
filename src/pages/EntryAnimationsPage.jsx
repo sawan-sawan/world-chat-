@@ -1,8 +1,26 @@
 import React from "react";
 import { ArrowLeft, Check, PartyPopper } from "lucide-react";
-import EntryLottie from "../components/EntryLottie";
+import EntryMedia from "../components/EntryMedia";
 import { ENTRY_ANIMATIONS } from "../data/entryAnimations";
 import "./EntryAnimationsPage.css";
+
+const CATALOG_SECTIONS = [
+  {
+    id: "free",
+    name: "Free",
+    description: "Ready-to-use entry animations for every account.",
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    description: "A richer collection for upgraded profiles.",
+  },
+  {
+    id: "vip",
+    name: "VIP",
+    description: "Exclusive statement entrances for VIP profiles.",
+  },
+];
 
 export default function EntryAnimationsPage({
   selectedAnimationId,
@@ -28,46 +46,78 @@ export default function EntryAnimationsPage({
         </div>
       </header>
 
-      <div className="entry-catalog-grid">
-        {ENTRY_ANIMATIONS.map((animation) => {
-          const selected = animation.id === selectedAnimationId;
+      <div className="entry-catalog-sections">
+        {CATALOG_SECTIONS.map((section) => {
+          const animations = ENTRY_ANIMATIONS.filter(
+            (animation) => animation.tier === section.id
+          );
 
           return (
-            <article
-              className={`entry-product ${selected ? "selected" : ""}`}
-              key={animation.id}
-            >
-              <div className={`entry-preview entry-preview-${animation.id}`}>
-                <EntryLottie
-                  animationData={animation.animationData}
-                  loop
-                  autoplay
-                  speed={animation.speed}
-                  className="entry-preview-lottie"
-                />
-
-                <div className="entry-preview-pill">
-                  <PartyPopper size={15} />
-                  You joined
-                </div>
-              </div>
-
-              <div className="entry-product-content">
+            <section className={`entry-tier entry-tier-${section.id}`} key={section.id}>
+              <header className="entry-tier-header">
                 <div>
-                  <h3>{animation.name}</h3>
-                  <p>{animation.description}</p>
+                  <p className="entry-tier-label">{section.name}</p>
+                  <h3>{section.name} animations</h3>
+                  <p>{section.description}</p>
                 </div>
+                <span>{animations.length} available</span>
+              </header>
 
-                <button
-                  className={`entry-apply-button ${selected ? "selected" : ""}`}
-                  type="button"
-                  onClick={() => onSelectAnimation(animation.id)}
-                >
-                  {selected ? <Check size={17} /> : <PartyPopper size={17} />}
-                  {selected ? "Applied" : "Apply"}
-                </button>
-              </div>
-            </article>
+              {animations.length ? (
+                <div className="entry-catalog-grid">
+                  {animations.map((animation) => {
+                    const selected = animation.id === selectedAnimationId;
+
+                    return (
+                      <article
+                        className={`entry-product ${selected ? "selected" : ""}`}
+                        key={animation.id}
+                      >
+                        <div className={`entry-preview entry-preview-${animation.id}`}>
+                          <EntryMedia
+                            animation={animation}
+                            loop
+                            className={`entry-preview-media ${animation.type === "video" ? "video" : "lottie"}`}
+                          />
+
+                          <div
+                            className="entry-preview-pill"
+                            style={{
+                              "--entry-gradient": animation.gradient,
+                              "--entry-glow": animation.glow,
+                            }}
+                          >
+                            <PartyPopper size={15} />
+                            You joined
+                          </div>
+                        </div>
+
+                        <div className="entry-product-content">
+                          <div>
+                            <h3>{animation.name}</h3>
+                            <p>{animation.description}</p>
+                          </div>
+
+                          <button
+                            className={`entry-apply-button ${selected ? "selected" : ""}`}
+                            type="button"
+                            onClick={() => onSelectAnimation(animation.id)}
+                          >
+                            {selected ? <Check size={17} /> : <PartyPopper size={17} />}
+                            {selected ? "Applied" : "Apply"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="entry-tier-empty">
+                  <PartyPopper size={20} />
+                  <p>New {section.name.toLowerCase()} animations will appear here.</p>
+                </div>
+              )}
+            </section>
           );
         })}
       </div>

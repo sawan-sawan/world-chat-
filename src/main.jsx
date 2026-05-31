@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
 import LogoIcon from "./components/LogoIcon";
-import { DEFAULT_ENTRY_ANIMATION_ID } from "./data/entryAnimations";
+import {
+  DEFAULT_ENTRY_ANIMATION_ID,
+  getEntryAnimation,
+} from "./data/entryAnimations";
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import "./styles.css";
@@ -90,6 +93,8 @@ function App() {
   const socketRef = useRef(null);
   const listRef = useRef(null);
   const typingTimerRef = useRef(null);
+  const joinNoticeTimerRef = useRef(null);
+  const entryAnimationIdRef = useRef(entryAnimationId);
 
   const roomId = session?.roomId;
   const onlineCount = users.length;
@@ -111,6 +116,14 @@ function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("talknesty-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    entryAnimationIdRef.current = entryAnimationId;
+  }, [entryAnimationId]);
+
+  useEffect(() => {
+    return () => window.clearTimeout(joinNoticeTimerRef.current);
+  }, []);
 
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -149,15 +162,11 @@ socket.on("room:history", ({ messages: history, users: roomUsers }) => {
   setUsers(roomUsers || []);
   setContacts((current) => mergePresence(current, roomUsers || []));
 
-  setJoinNotice({
+  showJoinNotice({
     id: `self-${Date.now()}`,
     name: session.name,
     isMe: true,
   });
-
-  setTimeout(() => {
-    setJoinNotice(null);
-  }, 2000);
 });
 
 socket.on("message:new", (message) => {
@@ -176,15 +185,11 @@ socket.on("message:new", (message) => {
     const isMe =
       joinedName.toLowerCase() === session?.name?.toLowerCase();
 
-    setJoinNotice({
+    showJoinNotice({
       id: Date.now(),
       name: joinedName,
       isMe,
     });
-
-    setTimeout(() => {
-      setJoinNotice(null);
-    }, 2000);
   }
 });
 
@@ -216,6 +221,17 @@ socket.on("message:new", (message) => {
 
   function toggleTheme() {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
+  }
+
+  function showJoinNotice(notice) {
+    const animation = getEntryAnimation(entryAnimationIdRef.current);
+    const duration = animation.type === "video" ? 4200 : 2000;
+
+    window.clearTimeout(joinNoticeTimerRef.current);
+    setJoinNotice(notice);
+    joinNoticeTimerRef.current = window.setTimeout(() => {
+      setJoinNotice(null);
+    }, duration);
   }
 
   function selectEntryAnimation(animationId) {

@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
-import EntryLottie from "../components/EntryLottie";
+import EntryMedia from "../components/EntryMedia";
 import { getEntryAnimation } from "../data/entryAnimations";
 import EntryAnimationsPage from "./EntryAnimationsPage";
 import "./ChatPage.css";
@@ -229,12 +229,17 @@ export default function ChatPage({
         ) : (
           <>
                {joinNotice ? (
-  <div className={`join-overlay entry-style-${entryAnimation.id}`} key={joinNotice.id}>
-    <EntryLottie
-      animationData={entryAnimation.animationData}
-      loop={false}
-      speed={entryAnimation.speed}
-      className="join-lottie-bg"
+  <div
+    className={`join-overlay entry-style-${entryAnimation.id} entry-media-${entryAnimation.type}`}
+    key={joinNotice.id}
+    style={{
+      "--entry-gradient": entryAnimation.gradient,
+      "--entry-glow": entryAnimation.glow,
+    }}
+  >
+    <EntryMedia
+      animation={entryAnimation}
+      className={`join-media-bg ${entryAnimation.type === "video" ? "video" : "lottie"}`}
     />
 
     <div className="join-animation">
