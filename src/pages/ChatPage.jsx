@@ -45,6 +45,8 @@ export default function ChatPage({
 
   return (
     <main className="chat-layout">
+      <div className="mobile-safe-strip" aria-hidden="true" />
+
       <header className="mobile-topbar">
         <div className="mobile-brand">
           <span className="brand-mark mobile">
@@ -66,15 +68,19 @@ export default function ChatPage({
         </button>
       </header>
 
-      {mobileMenuOpen ? (
-        <>
-          <button
-            className="mobile-menu-backdrop"
-            type="button"
-            aria-label="Close menu"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <section className="mobile-menu" id="mobile-chat-menu">
+      <>
+        <button
+          className={`mobile-menu-backdrop ${mobileMenuOpen ? "open" : ""}`}
+          type="button"
+          aria-label="Close menu"
+          tabIndex={mobileMenuOpen ? 0 : -1}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        <section
+          className={`mobile-menu ${mobileMenuOpen ? "open" : ""}`}
+          id="mobile-chat-menu"
+          aria-hidden={!mobileMenuOpen}
+        >
             <div className="mobile-menu-section">
               <h3><Hash size={16} /> Room details</h3>
               <div className="mobile-room-row">
@@ -127,9 +133,8 @@ export default function ChatPage({
                 Leave room
               </button>
             </div>
-          </section>
-        </>
-      ) : null}
+        </section>
+      </>
 
       <aside className="sidebar">
         <div className="sidebar-topbar">
