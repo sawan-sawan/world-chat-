@@ -272,6 +272,20 @@ socket.on("message:new", (message) => {
     setDraft("");
   }
 
+  async function sendVoiceMessage(blob, durationMs) {
+    if (!blob?.size) return;
+
+    const audioUrl = await blobToDataUrl(blob);
+    if (audioUrl.length > 2_500_000) {
+      setError("Voice message ka size zyada hai. Chhota voice note record karein.");
+      return;
+    }
+
+    socketRef.current?.emit("voice:send", { audioUrl, durationMs });
+    socketRef.current?.emit("typing:stop");
+    setError("");
+  }
+
   function updateDraft(value) {
     setDraft(value);
 
@@ -348,6 +362,7 @@ socket.on("message:new", (message) => {
       onDraftChange={updateDraft}
       onLeaveRoom={leaveRoom}
       onSendMessage={sendMessage}
+      onSendVoiceMessage={sendVoiceMessage}
       onToggleTheme={toggleTheme}
       timeLabel={timeLabel}
       joinNotice={joinNotice}
@@ -355,6 +370,15 @@ socket.on("message:new", (message) => {
       onSelectEntryAnimation={selectEntryAnimation}
     />
   );
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 function mergePresence(current, onlineUsers) {

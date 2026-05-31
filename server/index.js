@@ -13,9 +13,12 @@ const io = new Server(httpServer, {
     origin: CLIENT_ORIGIN,
     methods: ["GET", "POST"],
   },
+  maxHttpBufferSize: 3_000_000,
 });
 
 const rooms = new Map();
+const MAX_VOICE_DATA_LENGTH = 2_500_000;
+const MAX_VOICE_DURATION_MS = 30_000;
 
 function getRoom(roomId) {
   if (!rooms.has(roomId)) {
@@ -39,13 +42,24 @@ function roomUsers(roomId) {
   }));
 }
 
-function makeMessage({ roomId, sender, text, system = false }) {
+function makeMessage({
+  roomId,
+  sender,
+  text,
+  system = false,
+  type = "text",
+  audioUrl = "",
+  durationMs = 0,
+}) {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     roomId,
     sender,
     text,
     system,
+    type,
+    audioUrl,
+    durationMs,
     createdAt: new Date().toISOString(),
   };
 }
@@ -123,6 +137,46 @@ io.on("connection", (socket) => {
         color: socket.data.color || "#0f766e",
       },
       text: cleanText,
+    });
+
+    room.messages.push(message);
+    room.messages = room.messages.slice(-100);
+    io.to(roomId).emit("message:new", message);
+  });
+
+  socket.on("voice:send", ({ audioUrl, durationMs }) => {
+    const roomId = socket.data.roomId;
+    const room = roomId ? rooms.get(roomId) : null;
+
+    if (!room) {
+      socket.emit("room:error", "Join a room before sending voice messages.");
+      return;
+    }
+
+    const safeAudioUrl = String(audioUrl || "");
+    const safeDurationMs = Math.round(Number(durationMs) || 0);
+
+    if (
+      !safeAudioUrl.startsWith("data:audio/") ||
+      safeAudioUrl.length > MAX_VOICE_DATA_LENGTH ||
+      safeDurationMs < 1 ||
+      safeDurationMs > MAX_VOICE_DURATION_MS
+    ) {
+      socket.emit("room:error", "Voice message is invalid or too large.");
+      return;
+    }
+
+    const message = makeMessage({
+      roomId,
+      sender: {
+        id: socket.data.clientId || socket.id,
+        name: socket.data.name || "Guest",
+        color: socket.data.color || "#0f766e",
+      },
+      text: "Voice message",
+      type: "voice",
+      audioUrl: safeAudioUrl,
+      durationMs: safeDurationMs,
     });
 
     room.messages.push(message);

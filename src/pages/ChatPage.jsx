@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   CheckCheck,
   Copy,
   Hash,
   LogOut,
   Menu,
+  Mic,
   PartyPopper,
   Send,
   Sparkles,
+  Trash2,
   Users,
   Wifi,
   WifiOff,
@@ -39,6 +41,7 @@ export default function ChatPage({
   onDraftChange,
   onLeaveRoom,
   onSendMessage,
+  onSendVoiceMessage,
   onToggleTheme,
   timeLabel,
   joinNotice,
@@ -47,11 +50,108 @@ export default function ChatPage({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeView, setActiveView] = useState("chat");
+  const [recording, setRecording] = useState(false);
+  const [recordingError, setRecordingError] = useState("");
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const voiceChunksRef = useRef([]);
+  const recordingStartedAtRef = useRef(0);
+  const recordingTimerRef = useRef(null);
+  const shouldSendVoiceRef = useRef(false);
   const entryAnimation = getEntryAnimation(entryAnimationId);
+
+  useEffect(() => {
+    return () => stopRecording(false);
+  }, []);
+
+  useEffect(() => {
+    if (recordingSeconds < 30) return;
+    stopRecording(true);
+  }, [recordingSeconds]);
 
   function openEntryAnimations() {
     setMobileMenuOpen(false);
     setActiveView("entry-animations");
+  }
+
+  async function startRecording() {
+    if (!window.isSecureContext) {
+      setRecordingError("Voice recording needs HTTPS or localhost. Open the app directly in Chrome.");
+      return;
+    }
+
+    if (!window.MediaRecorder) {
+      setRecordingError("Voice recording is not supported in this browser. Update Chrome and try again.");
+      return;
+    }
+
+    try {
+      const stream = await requestMicrophoneStream();
+      const mimeType = getSupportedAudioMimeType();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      mediaStreamRef.current = stream;
+      mediaRecorderRef.current = recorder;
+      voiceChunksRef.current = [];
+      shouldSendVoiceRef.current = false;
+      recordingStartedAtRef.current = Date.now();
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) voiceChunksRef.current.push(event.data);
+      };
+
+      recorder.onstop = async () => {
+        window.clearInterval(recordingTimerRef.current);
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+
+        if (shouldSendVoiceRef.current && voiceChunksRef.current.length) {
+          const blob = new Blob(voiceChunksRef.current, {
+            type: recorder.mimeType || "audio/webm",
+          });
+          const durationMs = Math.min(
+            30_000,
+            Math.max(1, Date.now() - recordingStartedAtRef.current)
+          );
+          await onSendVoiceMessage(blob, durationMs);
+        }
+
+        voiceChunksRef.current = [];
+        shouldSendVoiceRef.current = false;
+      };
+
+      recorder.start(250);
+      setRecordingError("");
+      setRecordingSeconds(0);
+      setRecording(true);
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingSeconds(Math.floor((Date.now() - recordingStartedAtRef.current) / 1000));
+      }, 250);
+    } catch (error) {
+      if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
+        setRecordingError("Chrome address bar se microphone permission Allow karein.");
+      } else if (error?.name === "NotFoundError" || error?.name === "DevicesNotFoundError") {
+        setRecordingError("Microphone detect nahi hua. Device microphone check karein.");
+      } else {
+        setRecordingError("Microphone access unavailable hai. App ko direct Chrome tab mein open karein.");
+      }
+    }
+  }
+
+  function stopRecording(shouldSend) {
+    window.clearInterval(recordingTimerRef.current);
+    shouldSendVoiceRef.current = shouldSend;
+    setRecording(false);
+
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    } else {
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
   }
 
   return (
@@ -301,7 +401,15 @@ export default function ChatPage({
                     </div>
                   ) : null}
 
-                  <p>{message.text}</p>
+                  {message.type === "voice" ? (
+                    <div className="voice-message">
+                      <Mic size={16} />
+                      <audio controls preload="metadata" src={message.audioUrl} />
+                      <span>{formatVoiceDuration(message.durationMs)}</span>
+                    </div>
+                  ) : (
+                    <p>{message.text}</p>
+                  )}
                 </div>
               </article>
             );
@@ -313,30 +421,91 @@ export default function ChatPage({
           {typingText ? <p className="typing">{typingText}</p> : null}
         </div>
 
-        <form className="composer" onSubmit={onSendMessage}>
-          <input
-            ref={inputRef}
-            value={draft}
-            placeholder="Message likhein..."
-            maxLength={1200}
-            onChange={(event) => onDraftChange(event.target.value)}
-            onFocus={() => {
-              setTimeout(() => {
-                inputRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                });
-              }, 300);
-            }}
-          />
+        <form className={`composer ${recording ? "recording" : ""}`} onSubmit={onSendMessage}>
+          {recording ? (
+            <>
+              <div className="voice-recorder-status">
+                <span className="recording-dot" />
+                <strong>{formatVoiceDuration(recordingSeconds * 1000)}</strong>
+                <small>Recording voice message</small>
+              </div>
 
-          <button className="send-button" type="submit" title="Send message">
-            <Send size={20} />
-          </button>
+              <button className="voice-cancel-button" type="button" title="Cancel recording" onClick={() => stopRecording(false)}>
+                <Trash2 size={19} />
+              </button>
+
+              <button className="send-button" type="button" title="Send voice message" onClick={() => stopRecording(true)}>
+                <Send size={20} />
+              </button>
+            </>
+          ) : (
+            <>
+              <input
+                ref={inputRef}
+                value={draft}
+                placeholder="Message likhein..."
+                maxLength={1200}
+                onChange={(event) => onDraftChange(event.target.value)}
+                onFocus={() => {
+                  setTimeout(() => {
+                    inputRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                  }, 300);
+                }}
+              />
+
+              {draft.trim() ? (
+                <button className="send-button" type="submit" title="Send message">
+                  <Send size={20} />
+                </button>
+              ) : (
+                <button className="send-button voice-start-button" type="button" title="Record voice message" onClick={startRecording}>
+                  <Mic size={20} />
+                </button>
+              )}
+            </>
+          )}
         </form>
+        {recordingError ? <p className="recording-error">{recordingError}</p> : null}
           </>
         )}
       </section>
     </main>
   );
+}
+
+function getSupportedAudioMimeType() {
+  return [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4",
+  ].find((type) => MediaRecorder.isTypeSupported(type));
+}
+
+function requestMicrophoneStream() {
+  if (navigator.mediaDevices?.getUserMedia) {
+    return navigator.mediaDevices.getUserMedia({ audio: true });
+  }
+
+  const legacyGetUserMedia =
+    navigator.getUserMedia ||
+    navigator.webkitGetUserMedia ||
+    navigator.mozGetUserMedia;
+
+  if (!legacyGetUserMedia) {
+    return Promise.reject(new DOMException("Microphone API unavailable", "NotSupportedError"));
+  }
+
+  return new Promise((resolve, reject) => {
+    legacyGetUserMedia.call(navigator, { audio: true }, resolve, reject);
+  });
+}
+
+function formatVoiceDuration(durationMs = 0) {
+  const totalSeconds = Math.max(0, Math.round(durationMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
