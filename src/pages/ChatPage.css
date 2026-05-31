@@ -841,12 +841,15 @@
 
 .join-lottie-bg {
   position: absolute;
+  top: 50%;
+  left: 50%;
 
   width: 280px;
   height: 280px;
 
   z-index: 1;
   opacity: 0.95;
+  transform: translate(-50%, -50%);
 }
 
 .join-animation {
@@ -929,17 +932,12 @@
 }
 
 @media (max-width: 700px) {
-  .join-overlay {
-    padding-top: 76px;
-  }
-
   .join-animation {
     width: clamp(140px, 52vw, 175px);
     min-height: 54px;
   }
 
   .join-lottie-bg {
-    top: 28px;
     width: clamp(210px, 78vw, 280px);
     height: clamp(210px, 78vw, 280px);
   }
