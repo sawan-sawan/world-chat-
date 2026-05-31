@@ -1,18 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Check, Clock3, X } from "lucide-react";
 import ProfileAvatar from "./ProfileAvatar";
 
 const INVITE_DURATION_MS = 5000;
 
 export default function RoomInviteBanner({ invite, onAccept, onDismiss }) {
-  const [remainingMs, setRemainingMs] = useState(() => getRemainingMs(invite));
+  const [remainingMs, setRemainingMs] = useState(INVITE_DURATION_MS);
+  const dismissedRef = useRef(false);
 
   useEffect(() => {
-    setRemainingMs(getRemainingMs(invite));
+    const visibleUntil = Date.now() + INVITE_DURATION_MS;
+    dismissedRef.current = false;
+    setRemainingMs(INVITE_DURATION_MS);
+
     const timer = window.setInterval(() => {
-      const nextRemaining = getRemainingMs(invite);
+      const nextRemaining = Math.max(0, visibleUntil - Date.now());
       setRemainingMs(nextRemaining);
-      if (nextRemaining <= 0) {
+      if (nextRemaining <= 0 && !dismissedRef.current) {
+        dismissedRef.current = true;
         window.clearInterval(timer);
         onDismiss(invite, "expired");
       }
@@ -28,7 +33,7 @@ export default function RoomInviteBanner({ invite, onAccept, onDismiss }) {
       <div className="room-invite-copy">
         <span><Clock3 size={13} /> Room request</span>
         <strong>{invite.fromName} invited you</strong>
-        <small>Join room {invite.roomId}?</small>
+        <small>Join room {invite.roomId}? {Math.ceil(remainingMs / 1000)}s</small>
       </div>
       <button className="room-invite-accept" type="button" title="Accept room request" onClick={() => onAccept(invite)}>
         <Check size={19} />
@@ -39,10 +44,4 @@ export default function RoomInviteBanner({ invite, onAccept, onDismiss }) {
       <span className="room-invite-timeline" style={{ "--invite-progress": `${progress}%` }} />
     </section>
   );
-}
-
-function getRemainingMs(invite) {
-  const expiresAt = invite?.expiresAt?.toMillis?.()
-    || ((invite?.createdAt?.toMillis?.() || 0) + INVITE_DURATION_MS);
-  return Math.max(0, expiresAt - Date.now());
 }
