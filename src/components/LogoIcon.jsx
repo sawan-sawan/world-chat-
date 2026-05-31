@@ -1,6 +1,15 @@
 import React from "react";
-import { MessageCircle } from "lucide-react";
+import favicon from "../favicon.png";
 
 export default function LogoIcon({ size = 28 }) {
-  return <MessageCircle size={size} strokeWidth={2.4} />;
+  return (
+    <img
+      className="logo-image"
+      src={favicon}
+      width={size}
+      height={size}
+      alt=""
+      aria-hidden="true"
+    />
+  );
 }

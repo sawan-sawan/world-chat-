@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
 import LogoIcon from "./components/LogoIcon";
+import { DEFAULT_ENTRY_ANIMATION_ID } from "./data/entryAnimations";
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import "./styles.css";
@@ -77,6 +78,11 @@ function App() {
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [error, setError] = useState("");
   const [joinNotice, setJoinNotice] = useState(null);
+  const [entryAnimationId, setEntryAnimationId] = useState(
+    () =>
+      localStorage.getItem("talknesty-entry-animation") ||
+      DEFAULT_ENTRY_ANIMATION_ID
+  );
   const [theme, setTheme] = useState(
     () => localStorage.getItem("talknesty-theme") || "light"
   );
@@ -212,6 +218,11 @@ socket.on("message:new", (message) => {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   }
 
+  function selectEntryAnimation(animationId) {
+    localStorage.setItem("talknesty-entry-animation", animationId);
+    setEntryAnimationId(animationId);
+  }
+
   function joinRoom(event) {
     event.preventDefault();
 
@@ -324,6 +335,8 @@ socket.on("message:new", (message) => {
       onToggleTheme={toggleTheme}
       timeLabel={timeLabel}
       joinNotice={joinNotice}
+      entryAnimationId={entryAnimationId}
+      onSelectEntryAnimation={selectEntryAnimation}
     />
   );
 }

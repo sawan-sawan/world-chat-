@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import Lottie from "lottie-react";
-import confettiAnimation from "../assets/confetti.json";
 import {
   CheckCheck,
   Copy,
   Hash,
   LogOut,
   Menu,
+  PartyPopper,
   Send,
   Sparkles,
   Users,
@@ -15,6 +14,9 @@ import {
   X,
 } from "lucide-react";
 import LogoIcon from "../components/LogoIcon";
+import EntryLottie from "../components/EntryLottie";
+import { getEntryAnimation } from "../data/entryAnimations";
+import EntryAnimationsPage from "./EntryAnimationsPage";
 import "./ChatPage.css";
 
 export default function ChatPage({
@@ -40,8 +42,17 @@ export default function ChatPage({
   onToggleTheme,
   timeLabel,
   joinNotice,
+  entryAnimationId,
+  onSelectEntryAnimation,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeView, setActiveView] = useState("chat");
+  const entryAnimation = getEntryAnimation(entryAnimationId);
+
+  function openEntryAnimations() {
+    setMobileMenuOpen(false);
+    setActiveView("entry-animations");
+  }
 
   return (
     <main className="chat-layout">
@@ -133,6 +144,11 @@ export default function ChatPage({
                 Leave room
               </button>
             </div>
+
+            <button className="mobile-entry-button" type="button" onClick={openEntryAnimations}>
+              <PartyPopper size={17} />
+              Entry Animate
+            </button>
         </section>
       </>
 
@@ -190,18 +206,34 @@ export default function ChatPage({
           ))}
         </section>
 
-        <button className="secondary-button" type="button" onClick={onLeaveRoom}>
-          <LogOut size={18} />
-          Leave Room
-        </button>
+        <div className="sidebar-actions">
+          <button className="sidebar-entry-button" type="button" onClick={openEntryAnimations}>
+            <PartyPopper size={18} />
+            Entry Animate
+          </button>
+
+          <button className="secondary-button" type="button" onClick={onLeaveRoom}>
+            <LogOut size={18} />
+            Leave Room
+          </button>
+        </div>
       </aside>
 
-      <section className="chat-panel">
+      <section className={`chat-panel ${activeView === "entry-animations" ? "catalog-open" : ""}`}>
+        {activeView === "entry-animations" ? (
+          <EntryAnimationsPage
+            selectedAnimationId={entryAnimationId}
+            onBack={() => setActiveView("chat")}
+            onSelectAnimation={onSelectEntryAnimation}
+          />
+        ) : (
+          <>
                {joinNotice ? (
-  <div className="join-overlay" key={joinNotice.id}>
-    <Lottie
-      animationData={confettiAnimation}
+  <div className={`join-overlay entry-style-${entryAnimation.id}`} key={joinNotice.id}>
+    <EntryLottie
+      animationData={entryAnimation.animationData}
       loop={false}
+      speed={entryAnimation.speed}
       className="join-lottie-bg"
     />
 
@@ -297,6 +329,8 @@ export default function ChatPage({
             <Send size={20} />
           </button>
         </form>
+          </>
+        )}
       </section>
     </main>
   );

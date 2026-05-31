@@ -1,3 +1,4 @@
+
 .chat-layout {
   min-height: 100vh;
   display: grid;
@@ -47,11 +48,13 @@
 .sidebar-brand h1 {
   min-width: 0;
   overflow: hidden;
+    font-family: "Righteous", sans-serif;
+  font-weight: 400;
+  font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -1px;
+  letter-spacing: 1px;
   text-transform: lowercase;
 }
 
@@ -210,6 +213,25 @@
   font-weight: 900;
 }
 
+.sidebar-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.sidebar-entry-button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 14px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #18b8f5, #2563eb);
+  box-shadow: 0 12px 24px var(--shadow-blue);
+  font-weight: 900;
+}
+
 .chat-panel {
   min-width: 0;
   display: grid;
@@ -220,6 +242,10 @@
   background: var(--surface);
   border: 1px solid var(--border-soft);
   box-shadow: 0 22px 60px var(--shadow-soft);
+}
+
+.chat-panel.catalog-open {
+  display: block;
 }
 
 .chat-header {
@@ -712,6 +738,19 @@
     border-color: color-mix(in srgb, #e11d48 30%, var(--border-soft));
   }
 
+  .mobile-entry-button {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-soft));
+    border-radius: 12px;
+    color: var(--primary-text);
+    background: var(--input-bg);
+    font-weight: 900;
+  }
+
   .chat-panel {
     height: 100%;
     min-height: 0;
@@ -889,6 +928,27 @@
   color: #ffffff;
   font-size: clamp(13px, 2vw, 15px);
   font-weight: 900;
+}
+
+.entry-style-quick-burst .join-lottie-bg {
+  width: 230px;
+  height: 230px;
+}
+
+.entry-style-quick-burst .join-animation {
+  background: linear-gradient(135deg, #f97316, #e11d48);
+  box-shadow: 0 18px 45px rgba(225, 29, 72, 0.3);
+}
+
+.entry-style-soft-celebration .join-lottie-bg {
+  width: 330px;
+  height: 330px;
+  opacity: 0.78;
+}
+
+.entry-style-soft-celebration .join-animation {
+  background: linear-gradient(135deg, #10b981, #0f766e);
+  box-shadow: 0 18px 45px rgba(15, 118, 110, 0.3);
 }
 
 @keyframes joinTopPop {

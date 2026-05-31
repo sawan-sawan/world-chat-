@@ -48,8 +48,9 @@
 .brand-row h1 {
   font-size: 38px;
   line-height: 1;
+   font-family: "Righteous", sans-serif;
   font-weight: 900;
-  letter-spacing: -1.4px;
+  letter-spacing: 1px;
   text-transform: lowercase;
   color: var(--primary-text);
 }
