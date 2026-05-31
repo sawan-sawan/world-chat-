@@ -226,7 +226,7 @@ input:focus {
 :root[data-theme="light"] {
   --app-bg: #eef4ff;
   --app-bg-2: #dcecff;
-  --card-bg: #ffffff;
+  --card-bg: #f8fafc;
   --card-soft: #f8fbff;
   --surface: #ffffff;
   --input-bg: #f8fbff;
@@ -257,7 +257,7 @@ input:focus {
 :root[data-theme="dark"] {
   --app-bg: #020617;
   --app-bg-2: #0b1120;
-  --card-bg: #0f172a;
+  --card-bg: #020617;
   --card-soft: #111827;
   --surface: #0f172a;
   --input-bg: #111827;

@@ -437,6 +437,9 @@
 @media (max-width: 760px) {
   .chat-layout {
     --mobile-safe-top: max(22px, env(safe-area-inset-top));
+    position: fixed;
+    inset: 0;
+    width: 100%;
     height: 100dvh;
     min-height: 100dvh;
     grid-template-columns: 1fr;
@@ -458,6 +461,7 @@
   }
 
   .mobile-topbar {
+    position: relative;
     min-height: 58px;
     display: flex;
     align-items: center;
@@ -509,7 +513,7 @@
   }
 
   .mobile-menu-backdrop {
-    position: fixed;
+    position: absolute;
     inset: calc(58px + var(--mobile-safe-top)) 0 0;
     display: block;
     border: 0;
@@ -526,7 +530,7 @@
   }
 
   .mobile-menu {
-    position: fixed;
+    position: absolute;
     top: calc(58px + var(--mobile-safe-top));
     right: 0;
     left: 0;
@@ -727,7 +731,7 @@
     padding: 9px 10px;
     border: 1px solid var(--border-soft);
     border-radius: 12px;
-    background: var(--input-bg);
+    background: var(--surface);
   }
 
   .chat-mark {
