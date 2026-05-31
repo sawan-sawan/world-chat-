@@ -58,6 +58,7 @@ export default function ChatPage({
   const [recordingError, setRecordingError] = useState("");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [attachment, setAttachment] = useState(null);
+  const [profilePreview, setProfilePreview] = useState(null);
   const attachmentInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
@@ -75,6 +76,17 @@ export default function ChatPage({
     if (recordingSeconds < 30) return;
     stopRecording(true);
   }, [recordingSeconds]);
+
+  useEffect(() => {
+    if (!profilePreview) return undefined;
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setProfilePreview(null);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [profilePreview]);
 
   function openEntryAnimations() {
     setMobileMenuOpen(false);
@@ -401,8 +413,17 @@ export default function ChatPage({
 ) : null} 
         <header className="chat-header">
           <div className="chat-title">
-            {primaryContact ? (
-              <ProfileAvatar className="chat-mark" name={primaryContact.name} color={primaryContact.color} photoUrl={primaryContact.photoUrl} />
+            {primaryContact?.photoUrl ? (
+              <button
+                className="chat-profile-button"
+                type="button"
+                title={`View ${primaryContact.name} profile picture`}
+                onClick={() => setProfilePreview(primaryContact)}
+              >
+                <ProfileAvatar className="chat-mark" name={primaryContact.name} color={primaryContact.color} photoUrl={primaryContact.photoUrl} />
+              </button>
+            ) : primaryContact ? (
+              <ProfileAvatar className="chat-mark" name={primaryContact.name} color={primaryContact.color} />
             ) : (
               <span className="chat-mark">
                 <Sparkles size={20} />
@@ -555,6 +576,29 @@ export default function ChatPage({
           )}
         </form>
         {recordingError ? <p className="recording-error">{recordingError}</p> : null}
+
+        {profilePreview ? (
+          <div className="profile-preview-backdrop" role="presentation" onClick={() => setProfilePreview(null)}>
+            <section
+              className="profile-preview-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${profilePreview.name} profile picture`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button className="profile-preview-close" type="button" title="Close profile picture" onClick={() => setProfilePreview(null)}>
+                <X size={20} />
+              </button>
+              <img src={profilePreview.photoUrl} alt={`${profilePreview.name} profile`} />
+              <div>
+                <h3>{profilePreview.name}</h3>
+                <p className={profilePreview.status === "online" ? "online" : "offline"}>
+                  {profilePreview.status === "online" ? "Online" : "Offline"}
+                </p>
+              </div>
+            </section>
+          </div>
+        ) : null}
           </>
         )}
       </section>
