@@ -1,22 +1,19 @@
 import React, { useState } from "react";
-import { Check, Plus, Search, Trash2, UserPlus, UsersRound, X } from "lucide-react";
+import { MessageCircle, Search, Trash2, UserPlus, UsersRound, X } from "lucide-react";
 import ProfileAvatar from "./ProfileAvatar";
 import "./ContactsPanel.css";
 
 export default function ContactsPanel({
   open,
   contacts,
-  roomId,
-  outgoingInvites,
   onClose,
   onDeleteContact,
+  onOpenChat,
   onSearchAccount,
-  onSendRoomInvite,
 }) {
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [message, setMessage] = useState("");
-  const [sentContactId, setSentContactId] = useState("");
 
   if (!open) return null;
 
@@ -25,26 +22,16 @@ export default function ContactsPanel({
     try {
       const match = await onSearchAccount(search);
       setSearchResult(match);
-      setMessage(match ? "" : "Is mobile number se koi Talknesty user nahi mila.");
+      setMessage(match ? "" : "No Talknesty user was found with this mobile number.");
     } catch {
-      setMessage("Search complete nahi hui. Firestore rules check karein.");
+      setMessage("Search could not be completed. Check your Firestore rules.");
     }
   }
 
-  async function sendInvite(profile) {
+  async function openChat(profile) {
     if (!profile) return;
-    try {
-      await onSendRoomInvite(profile);
-      setMessage(`${profile.name || profile.username} ko room request send ho gayi.`);
-      setSentContactId(profile.id);
-      window.setTimeout(() => setSentContactId(""), 1800);
-    } catch (error) {
-      setMessage(error?.message || "Request send nahi hui. Updated Firestore rules publish karein.");
-    }
-  }
-
-  function hasPendingInvite(contactId) {
-    return outgoingInvites.some((invite) => invite.toUid === contactId && invite.status === "pending");
+    await onOpenChat(profile);
+    onClose();
   }
 
   return (
@@ -82,9 +69,7 @@ export default function ContactsPanel({
           {searchResult ? (
             <ContactRow
               contact={searchResult}
-              disabled={hasPendingInvite(searchResult.id)}
-              sent={sentContactId === searchResult.id}
-              onInvite={() => sendInvite(searchResult)}
+              onOpen={() => openChat(searchResult)}
             />
           ) : null}
         </section>
@@ -94,17 +79,15 @@ export default function ContactsPanel({
             <UsersRound size={17} />
             <div>
               <h3>Saved contacts</h3>
-              <p>Invite someone to room {roomId}.</p>
+              <p>Choose a contact to start chatting.</p>
             </div>
           </div>
           {contacts.length ? contacts.map((contact) => (
             <ContactRow
               contact={contact}
-              disabled={hasPendingInvite(contact.id)}
-              sent={sentContactId === contact.id}
               key={contact.id}
               onDelete={() => onDeleteContact(contact)}
-              onInvite={() => sendInvite(contact)}
+              onOpen={() => openChat(contact)}
             />
           )) : <p className="contacts-empty">Your saved contacts will appear here.</p>}
         </section>
@@ -115,7 +98,7 @@ export default function ContactsPanel({
   );
 }
 
-function ContactRow({ contact, disabled, sent, onDelete, onInvite }) {
+function ContactRow({ contact, onDelete, onOpen }) {
   return (
     <div className="contact-row">
       <ProfileAvatar name={contact.name} photoUrl={contact.photoUrl} />
@@ -123,8 +106,8 @@ function ContactRow({ contact, disabled, sent, onDelete, onInvite }) {
         <strong>{contact.name || contact.username}</strong>
         <small>{contact.phone || "Talknesty contact"}</small>
       </div>
-      <button className={disabled ? "pending" : ""} type="button" title={disabled ? "Request waiting for response" : "Send room request"} disabled={disabled} onClick={onInvite}>
-        {sent ? <Check size={16} /> : <Plus size={17} />}
+      <button type="button" title={`Message ${contact.name}`} onClick={onOpen}>
+        <MessageCircle size={17} />
       </button>
       {onDelete ? (
         <button className="delete" type="button" title={`Delete ${contact.name} contact`} onClick={onDelete}>

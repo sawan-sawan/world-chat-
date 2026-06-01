@@ -127,6 +127,16 @@ function makeMessage({
 }
 
 io.on("connection", (socket) => {
+  socket.on("inbox:subscribe", ({ roomIds = [] } = {}) => {
+    const safeRoomIds = Array.from(new Set(roomIds))
+      .map((roomId) => String(roomId || "").trim().slice(0, 32))
+      .filter((roomId) => roomId.startsWith("DM-"))
+      .slice(0, 120);
+
+    safeRoomIds.forEach((roomId) => socket.join(roomId));
+    socket.data.inboxRoomIds = safeRoomIds;
+  });
+
   socket.on("room:join", ({ roomId, name, color, clientId, photoUrl, entryAnimationId }) => {
     const safeRoomId = String(roomId || "").trim().slice(0, 32);
     const safeName = String(name || "Guest").trim().slice(0, 28);

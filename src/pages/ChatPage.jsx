@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   CheckCheck,
-  Check,
   ContactRound,
-  Copy,
-  Hash,
-  LogOut,
+  MessageCircle,
   Menu,
   Mic,
   Paperclip,
@@ -44,10 +42,8 @@ export default function ChatPage({
   onlineCount,
   primaryContact,
   roomId,
-  roomStatus,
   theme,
   typingText,
-  onCopyInvite,
   onDraftChange,
   onLeaveRoom,
   onSendMessage,
@@ -59,13 +55,17 @@ export default function ChatPage({
   entryAnimationId,
   onSelectEntryAnimation,
   accountProfile,
+  activeContactId,
   savedContacts,
+  conversationPreviews,
+  unreadCounts,
   roomInvites,
   outgoingInvites,
   onAcceptRoomInvite,
   onDismissRoomInvite,
   onDeleteContact,
   onLogoutAccount,
+  onOpenChat,
   onSearchAccount,
   onSendRoomInvite,
   onUpdateAccountProfile,
@@ -81,8 +81,6 @@ export default function ChatPage({
   const [contactsPanelOpen, setContactsPanelOpen] = useState(false);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [inviteFeedback, setInviteFeedback] = useState(null);
-  const [sentContactId, setSentContactId] = useState("");
-  const [sendConfirmation, setSendConfirmation] = useState("");
   const [textSize, setTextSize] = useState(() => localStorage.getItem("talknesty-text-size") || "medium");
   const attachmentInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -147,18 +145,6 @@ export default function ChatPage({
     setTextSize(size);
   }
 
-  async function sendContactInvite(contact) {
-    await onSendRoomInvite(contact);
-    setSentContactId(contact.id);
-    setSendConfirmation(`${contact.name} ko request send ho gayi.`);
-    window.setTimeout(() => setSentContactId(""), 1800);
-    window.setTimeout(() => setSendConfirmation(""), 2400);
-  }
-
-  function hasPendingInvite(contactId) {
-    return outgoingInvites.some((invite) => invite.toUid === contactId && invite.status === "pending");
-  }
-
   async function startRecording() {
     if (!window.isSecureContext) {
       setRecordingError("Voice recording needs HTTPS or localhost. Open the app directly in Chrome.");
@@ -216,11 +202,11 @@ export default function ChatPage({
       }, 250);
     } catch (error) {
       if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
-        setRecordingError("Chrome address bar se microphone permission Allow karein.");
+        setRecordingError("Allow microphone access from the Chrome address bar.");
       } else if (error?.name === "NotFoundError" || error?.name === "DevicesNotFoundError") {
-        setRecordingError("Microphone detect nahi hua. Device microphone check karein.");
+        setRecordingError("No microphone was detected. Check your device microphone.");
       } else {
-        setRecordingError("Microphone access unavailable hai. App ko direct Chrome tab mein open karein.");
+        setRecordingError("Microphone access is unavailable. Open the app directly in a Chrome tab.");
       }
     }
   }
@@ -247,12 +233,12 @@ export default function ChatPage({
     const isVideo = file.type.startsWith("video/");
 
     if (!isImage && !isVideo) {
-      setRecordingError("Sirf photo ya video select karein.");
+      setRecordingError("Select a photo or video.");
       return;
     }
 
     if (file.size > 20_000_000) {
-      setRecordingError("Photo ya video 20 MB se chhota hona chahiye.");
+      setRecordingError("Photos and videos must be smaller than 20 MB.");
       return;
     }
 
@@ -321,20 +307,6 @@ export default function ChatPage({
           aria-hidden={!mobileMenuOpen}
         >
             <div className="mobile-menu-section">
-              <h3><Hash size={16} /> Room details</h3>
-              <div className="mobile-room-row">
-                <div>
-                  <strong>{roomId}</strong>
-                  <span>{onlineCount} online now</span>
-                </div>
-                <button className="mobile-action-button" type="button" title="Copy invite" onClick={onCopyInvite}>
-                  <Copy size={17} />
-                  <span>Copy</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="mobile-menu-section">
               <h3>{connection === "online" ? <Wifi size={16} /> : <WifiOff size={16} />} Connection</h3>
               <p className={`mobile-connection ${connection}`}>
                 <span />
@@ -363,8 +335,8 @@ export default function ChatPage({
 
             <div className="mobile-menu-actions">
               <button className="mobile-leave-button" type="button" onClick={onLeaveRoom}>
-                <LogOut size={17} />
-                Leave room
+                <ArrowLeft size={17} />
+                Back to chats
               </button>
             </div>
 
@@ -393,77 +365,56 @@ export default function ChatPage({
           </button>
         </div>
 
-        <div className="room-card">
-          <div>
-            <p className="eyebrow">Room</p>
-            <h2>{roomId}</h2>
-            <p className="room-subtitle">{onlineCount} online now</p>
-          </div>
-
-          <button className="icon-button" type="button" title="Copy invite" onClick={onCopyInvite}>
-            <Copy size={18} />
-          </button>
-        </div>
-
-        <div className={`status ${connection}`}>
-          {connection === "online" ? <Wifi size={17} /> : <WifiOff size={17} />}
-          <span />
-          {connection === "online"
-            ? "You are online"
-            : connection === "connecting"
-              ? "Connecting"
-              : "You are offline"}
-        </div>
-
         <button className="sidebar-profile-card" type="button" onClick={() => setProfileSidebarOpen(true)}>
           <ProfileAvatar name={accountProfile?.name || "You"} photoUrl={accountProfile?.photoUrl} />
           <span><strong>{accountProfile?.name || "Your profile"}</strong><small>View and edit profile</small></span>
           <UserRound size={17} />
         </button>
 
-        <section className="people">
-   
-          <h3>People</h3>
+        <div className={`status sidebar-connection ${connection}`}>
+          {connection === "online" ? <Wifi size={15} /> : <WifiOff size={15} />}
+          <span />
+          {connection === "online"
+            ? "Connected"
+            : connection === "connecting"
+              ? "Connecting"
+              : "Offline"}
+        </div>
 
-          {contacts.map((user) => (
-            <div className={`person ${user.status}`} key={user.id}>
-              <ProfileAvatar className="person-avatar" name={user.name} color={user.color} photoUrl={user.photoUrl} />
-
-              <div>
-                <p className="user-name">{user.id === currentUserId ? "You" : user.name}</p>
-                <small className="user-status">{user.status === "online" ? "Online" : "Offline"}</small>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        <section className="sidebar-friends">
+        <section className="sidebar-friends sidebar-conversations">
           <button className="sidebar-friends-heading" type="button" onClick={() => setContactsPanelOpen(true)}>
-            <span><ContactRound size={16} /> Friends</span>
-            <small><Plus size={14} /> Add friends</small>
+            <span><MessageCircle size={16} /> Chats</span>
+            <small><Plus size={14} /> Add contact</small>
           </button>
           <div className="sidebar-friends-list">
             {savedContacts.length ? savedContacts.map((contact) => {
-              const pending = hasPendingInvite(contact.id);
+              const preview = conversationPreviews[contact.id];
+              const unread = unreadCounts[contact.id] || 0;
               return (
-                <div className="sidebar-friend" key={contact.id}>
+                <button
+                  className={`sidebar-friend sidebar-chat-contact ${activeContactId === contact.id ? "active" : ""}`}
+                  type="button"
+                  key={contact.id}
+                  onClick={() => onOpenChat(contact)}
+                >
                   <ProfileAvatar name={contact.name} photoUrl={contact.photoUrl} />
-                  <span><strong>{contact.name}</strong><small>{contact.phone || "Saved contact"}</small></span>
-                  <button className={pending ? "pending" : ""} type="button" title={pending ? "Request waiting for response" : "Send room request"} disabled={pending} onClick={() => sendContactInvite(contact)}>
-                    {sentContactId === contact.id ? <Check size={16} /> : <Plus size={16} />}
-                  </button>
-                  <button className="delete" type="button" title={`Delete ${contact.name} contact`} onClick={() => onDeleteContact(contact)}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                  <span>
+                    <strong>{contact.name}</strong>
+                    <small>{preview ? `${preview.mine ? "You: " : ""}${preview.text}` : "Start a conversation"}</small>
+                  </span>
+                  <em>
+                    {preview?.createdAt ? formatSidebarTime(preview.createdAt) : ""}
+                    {unread ? <b>{unread}</b> : null}
+                  </em>
+                </button>
               );
-            }) : <p>No saved friends yet.</p>}
+            }) : <p>No saved chats yet.</p>}
           </div>
         </section>
 
         <button className="sidebar-leave-button" type="button" onClick={onLeaveRoom}>
-          <LogOut size={18} />
-          Leave Room
+          <ArrowLeft size={18} />
+          Back to chats
         </button>
       </aside>
 
@@ -493,10 +444,6 @@ export default function ChatPage({
               ? `${inviteFeedback.name} accepted your room request.`
               : `${inviteFeedback.name} did not accept your request. You can send it again.`}
           </div>
-        ) : null}
-
-        {sendConfirmation ? (
-          <div className="invite-sent-confirmation" role="status"><Check size={16} /> {sendConfirmation}</div>
         ) : null}
 
                {joinNotice ? (
@@ -534,6 +481,9 @@ export default function ChatPage({
 ) : null} 
         <header className="chat-header">
           <div className="chat-title">
+            <button className="chat-back-button" type="button" title="Back to chats" onClick={onLeaveRoom}>
+              <ArrowLeft size={20} />
+            </button>
             {primaryContact?.photoUrl ? (
               <button
                 className="chat-profile-button"
@@ -552,9 +502,13 @@ export default function ChatPage({
             )}
 
             <div>
-              <p className="eyebrow">Realtime chat</p>
-              <h2>{primaryContact?.name || roomId}</h2>
-              <p className="chat-subtitle">{roomStatus}</p>
+              <h2>{primaryContact?.name || "New chat"}</h2>
+              <p className={`chat-presence ${primaryContact?.status || (onlineCount ? "online" : "offline")}`}>
+                <span />
+                {primaryContact
+                  ? primaryContact.status === "online" ? "Online" : "Offline"
+                  : onlineCount ? "Online" : "Offline"}
+              </p>
             </div>
           </div>
 
@@ -695,7 +649,7 @@ export default function ChatPage({
                 <input
                   ref={inputRef}
                   value={draft}
-                  placeholder="Message likhein..."
+                  placeholder="Type a message..."
                   maxLength={1200}
                   onChange={(event) => onDraftChange(event.target.value)}
                   onFocus={() => {
@@ -755,12 +709,10 @@ export default function ChatPage({
         <ContactsPanel
           open={contactsPanelOpen}
           contacts={savedContacts}
-          roomId={roomId}
-          outgoingInvites={outgoingInvites}
           onClose={() => setContactsPanelOpen(false)}
           onDeleteContact={onDeleteContact}
+          onOpenChat={onOpenChat}
           onSearchAccount={onSearchAccount}
-          onSendRoomInvite={onSendRoomInvite}
         />
 
         <AppSettingsPanel
@@ -810,6 +762,13 @@ function formatVoiceDuration(durationMs = 0) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = String(totalSeconds % 60).padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+function formatSidebarTime(value) {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function getInviteTime(invite) {

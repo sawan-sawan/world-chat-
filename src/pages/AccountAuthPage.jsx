@@ -26,7 +26,7 @@ function AccountAuthPage() {
 
   async function resetPassword() {
     if (!email.trim()) {
-      setMessage("Password reset ke liye pehle apna email enter karein.");
+      setMessage("Enter your email before requesting a password reset.");
       return;
     }
 
@@ -34,7 +34,7 @@ function AccountAuthPage() {
     setMessage("");
     try {
       await sendPasswordResetEmail(auth, email.trim());
-      setMessage("Password reset email bhej diya gaya hai. Apna inbox check karein.");
+      setMessage("Password reset email sent. Check your inbox.");
     } catch (error) {
       setMessage(getAuthErrorMessage(error));
     } finally {
@@ -121,21 +121,21 @@ function AccountAuthPage() {
 function getAuthErrorMessage(error) {
   switch (error?.code) {
     case "auth/email-already-in-use":
-      return "Is email ka account pehle se bana hua hai. Sign in karein.";
+      return "An account already exists for this email. Sign in instead.";
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found":
-      return "Email ya password sahi nahi hai.";
+      return "The email or password is incorrect.";
     case "auth/invalid-email":
-      return "Valid email enter karein.";
+      return "Enter a valid email address.";
     case "auth/weak-password":
-      return "Password kam se kam 6 characters ka rakhein.";
+      return "Use a password with at least 6 characters.";
     case "auth/operation-not-allowed":
-      return "Firebase Console mein Email/Password sign-in enable karein.";
+      return "Enable Email/Password sign-in in Firebase Console.";
     case "auth/too-many-requests":
-      return "Kaafi attempts ho gaye. Thodi der baad dobara try karein.";
+      return "Too many attempts. Try again later.";
     default:
-      return "Login nahi ho paya. Dobara try karein.";
+      return "Sign-in failed. Try again.";
   }
 }
 

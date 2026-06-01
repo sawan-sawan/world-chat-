@@ -24,7 +24,7 @@
   background: var(--sidebar-gradient);
   color: #ffffff;
   display: grid;
-  grid-template-rows: auto auto auto auto minmax(84px, 1fr) minmax(108px, auto) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   gap: 14px;
   box-shadow: 0 22px 60px var(--shadow-blue);
   overflow: hidden;
@@ -100,6 +100,28 @@
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.chat-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.chat-presence span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.chat-presence.offline {
+  color: #e11d48;
 }
 
 .eyebrow {
@@ -257,10 +279,20 @@
 
 .sidebar-friends {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 7px;
   min-height: 0;
   padding-top: 11px;
   border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.sidebar-conversations {
+  padding-top: 4px;
+}
+
+.sidebar-connection {
+  min-height: 28px;
+  font-size: 12px;
 }
 
 .sidebar-friends-heading {
@@ -289,6 +321,7 @@
 
 .sidebar-friends-list {
   display: grid;
+  align-content: start;
   gap: 5px;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -306,6 +339,43 @@
   align-items: center;
   gap: 8px;
   padding: 6px 0;
+}
+
+.sidebar-chat-contact {
+  width: 100%;
+  padding: 9px 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: #ffffff;
+  background: transparent;
+  text-align: left;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.sidebar-chat-contact:hover,
+.sidebar-chat-contact.active {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.sidebar-chat-contact em {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  color: #dff7ff;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.sidebar-chat-contact em b {
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #052e16;
+  background: #4ade80;
+  font-size: 10px;
 }
 
 .sidebar-friend .profile-avatar {
@@ -548,6 +618,10 @@
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.chat-back-button {
+  display: none;
 }
 
 .chat-title h2 {
@@ -1157,6 +1231,18 @@
 
   .sidebar {
     display: none;
+  }
+
+  .chat-back-button {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    color: var(--primary-text);
+    background: var(--input-bg);
   }
 
   .mobile-safe-strip {

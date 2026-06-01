@@ -8,7 +8,7 @@ import {
 } from "./data/entryAnimations";
 import ChatPage from "./pages/ChatPage";
 import AccountAuthPage from "./pages/AccountAuthPage";
-import LoginPage from "./pages/LoginPage";
+import ConversationsPage from "./pages/ConversationsPage";
 import { auth } from "./lib/firebase";
 import {
   deleteStoredContact,
@@ -30,10 +30,6 @@ const SERVER_URL =
   `${window.location.protocol}//${window.location.hostname}:3001`;
 
 const COLORS = ["#2563eb", "#18b8f5", "#7c3aed", "#f97316", "#ec4899", "#10b981"];
-
-function randomRoom() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
 
 function savedProfile() {
   try {
@@ -75,9 +71,11 @@ function App() {
   const [outgoingInvites, setOutgoingInvites] = useState([]);
   const [name, setName] = useState(initialProfile.name || "");
   const [profilePhoto, setProfilePhoto] = useState(initialProfile.photoUrl || "");
-  const [roomInput, setRoomInput] = useState(initialProfile.roomId || randomRoom());
   const [color] = useState(initialProfile.color || COLORS[0]);
   const [session, setSession] = useState(null);
+  const [directContact, setDirectContact] = useState(null);
+  const [conversationPreviews, setConversationPreviews] = useState({});
+  const [unreadCounts, setUnreadCounts] = useState({});
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -96,6 +94,7 @@ function App() {
   );
 
   const socketRef = useRef(null);
+  const savedContactsRef = useRef(savedContacts);
   const listRef = useRef(null);
   const typingTimerRef = useRef(null);
   const joinNoticeTimerRef = useRef(null);
@@ -106,11 +105,21 @@ function App() {
   const currentUserId = session?.clientId || clientId;
 
   const otherContacts = contacts.filter((user) => user.id !== currentUserId);
-  const primaryContact = otherContacts[0];
-
-  const roomStatus = primaryContact
-    ? `${primaryContact.name} is ${primaryContact.status}`
-    : `${onlineCount} online in this room`;
+  const primaryContact =
+    otherContacts[0] ||
+    (directContact ? { ...directContact, status: "offline" } : undefined);
+  const contactPreviews = Object.fromEntries(
+    savedContacts.map((contact) => [
+      contact.id,
+      conversationPreviews[privateRoomId(accountUser?.uid, contact.id)],
+    ])
+  );
+  const contactUnreadCounts = Object.fromEntries(
+    savedContacts.map((contact) => [
+      contact.id,
+      unreadCounts[privateRoomId(accountUser?.uid, contact.id)] || 0,
+    ])
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => setShowIntro(false), 1300);
@@ -120,14 +129,14 @@ function App() {
   useEffect(() => {
     if (!accountUser) return undefined;
     return subscribeStoredRoomInvites(accountUser.uid, setRoomInvites, () => {
-      setError("Room requests ke liye updated Firestore rules publish karein.");
+      setError("Publish the updated Firestore rules to use room requests.");
     });
   }, [accountUser]);
 
   useEffect(() => {
     if (!accountUser) return undefined;
     return subscribeStoredOutgoingInvites(accountUser.uid, setOutgoingInvites, () => {
-      setError("Outgoing requests ke liye updated Firestore rules publish karein.");
+      setError("Publish the updated Firestore rules to use outgoing requests.");
     });
   }, [accountUser]);
 
@@ -139,7 +148,7 @@ function App() {
         const expiresAt = invite.expiresAt?.toMillis?.() || Date.now() + 5000;
         return window.setTimeout(() => {
           expireStoredOutgoingInvite(accountUser.uid, invite.id).catch(() => {
-            setError("Room request status update nahi hui. Firestore rules publish karein.");
+            setError("Room request status could not be updated. Publish the latest Firestore rules.");
           });
         }, Math.max(0, expiresAt - Date.now()));
       });
@@ -156,6 +165,7 @@ function App() {
         setSavedContacts([]);
         setOutgoingInvites([]);
         setSession(null);
+        setDirectContact(null);
         setAccountReady(true);
         return;
       }
@@ -168,12 +178,8 @@ function App() {
         setName(profileName);
         setProfilePhoto(photoUrl);
         setSavedContacts(await loadStoredContacts(user.uid));
-        enterRoom(initialProfile.roomId || roomInput, {
-          name: profileName,
-          photoUrl,
-        });
       } catch {
-        setError("Firebase profile load nahi hui. Firestore Database enable karke refresh karein.");
+        setError("Your Firebase profile could not be loaded. Enable Firestore Database and refresh.");
       } finally {
         setAccountReady(true);
       }
@@ -188,6 +194,11 @@ function App() {
   useEffect(() => {
     entryAnimationIdRef.current = entryAnimationId;
   }, [entryAnimationId]);
+
+  useEffect(() => {
+    savedContactsRef.current = savedContacts;
+    subscribeToInbox(socketRef.current, accountUser?.uid, savedContacts);
+  }, [accountUser, savedContacts]);
 
   useEffect(() => {
     return () => window.clearTimeout(joinNoticeTimerRef.current);
@@ -217,13 +228,14 @@ function App() {
         ...session,
         entryAnimationId: entryAnimationIdRef.current,
       });
+      subscribeToInbox(socket, accountUser?.uid, savedContactsRef.current);
     });
 
     socket.on("disconnect", () => setConnection("offline"));
 
     socket.on("connect_error", () => {
       setConnection("offline");
-      setError("Server se connection nahi ho pa raha. Server URL/deployment check karein.");
+      setError("Unable to connect to the server. Check the server URL and deployment.");
     });
 
     socket.on("room:error", setError);
@@ -232,6 +244,7 @@ socket.on("room:history", ({ messages: history, users: roomUsers }) => {
   setMessages(history || []);
   setUsers(roomUsers || []);
   setContacts((current) => mergePresence(current, roomUsers || []));
+  updateConversationPreview((history || []).filter((message) => !message.system).at(-1));
 
   showJoinNotice({
     id: `self-${Date.now()}`,
@@ -242,6 +255,16 @@ socket.on("room:history", ({ messages: history, users: roomUsers }) => {
 });
 
 socket.on("message:new", (message) => {
+  updateConversationPreview(message);
+  if (message.roomId !== session.roomId) {
+    if (!message.system && message.sender?.id !== currentUserId) {
+      setUnreadCounts((current) => ({
+        ...current,
+        [message.roomId]: (current[message.roomId] || 0) + 1,
+      }));
+    }
+    return;
+  }
   setMessages((current) => [...current, message]);
 
   const text = message?.text || "";
@@ -294,7 +317,7 @@ socket.on("message:new", (message) => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [session]);
+  }, [accountUser, session]);
 
   const typingText = useMemo(() => {
     const names = Array.from(typingUsers.values()).slice(0, 2);
@@ -312,6 +335,19 @@ socket.on("message:new", (message) => {
     joinNoticeTimerRef.current = window.setTimeout(() => {
       setJoinNotice(null);
     }, 4000);
+  }
+
+  function updateConversationPreview(message) {
+    if (!message?.roomId || message.system) return;
+    setConversationPreviews((current) => ({
+      ...current,
+      [message.roomId]: {
+        createdAt: message.createdAt,
+        mine: message.sender?.id === currentUserId,
+        senderName: message.sender?.name || "",
+        text: previewMessage(message),
+      },
+    }));
   }
 
   function selectEntryAnimation(animationId) {
@@ -334,10 +370,10 @@ socket.on("message:new", (message) => {
 
   function enterRoom(nextRoomId, profile = {}) {
     const cleanName = String(profile.name || name).trim();
-    const cleanRoom = String(nextRoomId || roomInput).trim().toUpperCase();
+    const cleanRoom = String(nextRoomId || "").trim().toUpperCase();
 
     if (!cleanName || !cleanRoom) {
-      setError("Name aur Room ID dono required hain.");
+      setError("Name and Room ID are required.");
       return;
     }
 
@@ -350,17 +386,7 @@ socket.on("message:new", (message) => {
     };
 
     localStorage.setItem("talknesty-profile", JSON.stringify(nextSession));
-    setRoomInput(cleanRoom);
     setSession(nextSession);
-  }
-
-  function joinRoom(event) {
-    event.preventDefault();
-    enterRoom(roomInput);
-  }
-
-  async function changeProfilePhoto(file) {
-    setProfilePhoto(file ? await blobToDataUrl(file) : "");
   }
 
   function sendMessage(event) {
@@ -379,7 +405,7 @@ socket.on("message:new", (message) => {
 
     const audioUrl = await blobToDataUrl(blob);
     if (audioUrl.length > 2_500_000) {
-      setError("Voice message ka size zyada hai. Chhota voice note record karein.");
+      setError("This voice message is too large. Record a shorter voice note.");
       return;
     }
 
@@ -395,13 +421,13 @@ socket.on("message:new", (message) => {
     const isVideo = file.type.startsWith("video/");
 
     if (!isImage && !isVideo) {
-      setError("Sirf photos aur videos send kar sakte hain.");
+      setError("Only photos and videos can be sent.");
       return false;
     }
 
     const mediaUrl = await blobToDataUrl(file);
     if (mediaUrl.length > 28_000_000) {
-      setError("Photo ya video ka size zyada hai. Video 20 MB se chhota choose karein.");
+      setError("This file is too large. Choose a photo or video under 20 MB.");
       return false;
     }
 
@@ -425,11 +451,6 @@ socket.on("message:new", (message) => {
     }, 900);
   }
 
-  async function copyInvite() {
-    const text = `Join my Talknesty room: ${roomId}`;
-    await navigator.clipboard?.writeText(text);
-  }
-
   function leaveRoom() {
     socketRef.current?.disconnect();
     setSession(null);
@@ -438,6 +459,7 @@ socket.on("message:new", (message) => {
     setContacts([]);
     setTypingUsers(new Map());
     setConnection("idle");
+    setDirectContact(null);
   }
 
   async function updateAccountProfile(updates) {
@@ -466,7 +488,7 @@ socket.on("message:new", (message) => {
   async function sendRoomInvite(profile) {
     if (!accountUser || !accountProfile || !profile || profile.id === accountUser.uid) return;
     if (outgoingInvites.some((invite) => invite.toUid === profile.id && invite.status === "pending")) {
-      throw new Error("Request ka response pending hai. 5 seconds ke baad dobara send kar sakte hain.");
+      throw new Error("This request is waiting for a response. You can send it again after 5 seconds.");
     }
     await saveStoredContact(accountUser.uid, profile);
     await sendStoredRoomInvite({
@@ -483,6 +505,16 @@ socket.on("message:new", (message) => {
     setSavedContacts(await loadStoredContacts(accountUser.uid));
   }
 
+  async function openDirectChat(contact) {
+    if (!accountUser || !contact?.id || contact.id === accountUser.uid) return;
+    await saveStoredContact(accountUser.uid, contact);
+    setSavedContacts(await loadStoredContacts(accountUser.uid));
+    setDirectContact(contact);
+    const nextRoomId = privateRoomId(accountUser.uid, contact.id);
+    setUnreadCounts((current) => ({ ...current, [nextRoomId]: 0 }));
+    enterRoom(nextRoomId);
+  }
+
   async function acceptRoomInvite(invite) {
     if (!accountUser) return;
     await saveStoredContact(accountUser.uid, {
@@ -493,7 +525,7 @@ socket.on("message:new", (message) => {
     });
     const accepted = await finishStoredRoomInvite(accountUser.uid, invite, "accepted");
     if (!accepted) {
-      setError("Room request expire ho chuki hai. Sender se request dobara bhejne ko kahe.");
+      setError("This room request has expired. Ask the sender to send it again.");
       return;
     }
     setSavedContacts(await loadStoredContacts(accountUser.uid));
@@ -533,16 +565,23 @@ socket.on("message:new", (message) => {
 
   if (!session) {
     return (
-      <LoginPage
+      <ConversationsPage
+        accountProfile={accountProfile}
+        contacts={savedContacts}
+        conversationPreviews={contactPreviews}
         error={error}
-        name={name}
-        profilePhoto={profilePhoto}
-        roomInput={roomInput}
-        onGenerateRoom={() => setRoomInput(randomRoom())}
-        onNameChange={setName}
-        onProfilePhotoChange={changeProfilePhoto}
-        onRoomChange={setRoomInput}
-        onSubmit={joinRoom}
+        entryAnimationId={entryAnimationId}
+        roomInvites={roomInvites}
+        theme={theme}
+        onAcceptRoomInvite={acceptRoomInvite}
+        onDeleteContact={deleteContact}
+        onDismissRoomInvite={dismissRoomInvite}
+        onLogoutAccount={logoutAccount}
+        onOpenChat={openDirectChat}
+        onSearchAccount={searchAccount}
+        onSelectEntryAnimation={selectEntryAnimation}
+        onToggleTheme={toggleTheme}
+        onUpdateAccountProfile={updateAccountProfile}
       />
     );
   }
@@ -560,10 +599,8 @@ socket.on("message:new", (message) => {
       onlineCount={onlineCount}
       primaryContact={primaryContact}
       roomId={roomId}
-      roomStatus={roomStatus}
       theme={theme}
       typingText={typingText}
-      onCopyInvite={copyInvite}
       onDraftChange={updateDraft}
       onLeaveRoom={leaveRoom}
       onSendMessage={sendMessage}
@@ -575,13 +612,17 @@ socket.on("message:new", (message) => {
       entryAnimationId={entryAnimationId}
       onSelectEntryAnimation={selectEntryAnimation}
       accountProfile={accountProfile}
+      activeContactId={directContact?.id}
       savedContacts={savedContacts}
+      conversationPreviews={contactPreviews}
+      unreadCounts={contactUnreadCounts}
       roomInvites={roomInvites}
       outgoingInvites={outgoingInvites}
       onAcceptRoomInvite={acceptRoomInvite}
       onDismissRoomInvite={dismissRoomInvite}
       onDeleteContact={deleteContact}
       onLogoutAccount={logoutAccount}
+      onOpenChat={openDirectChat}
       onSearchAccount={searchAccount}
       onSendRoomInvite={sendRoomInvite}
       onUpdateAccountProfile={updateAccountProfile}
@@ -620,6 +661,31 @@ function mergePresence(current, onlineUsers) {
     if (first.status !== second.status) return first.status === "online" ? -1 : 1;
     return first.name.localeCompare(second.name);
   });
+}
+
+function privateRoomId(firstUid, secondUid) {
+  const pair = [String(firstUid), String(secondUid)].sort().join(":");
+  let hash = 2166136261;
+
+  for (let index = 0; index < pair.length; index += 1) {
+    hash ^= pair.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `DM-${(hash >>> 0).toString(36).toUpperCase()}`;
+}
+
+function subscribeToInbox(socket, uid, contacts) {
+  if (!socket?.connected || !uid) return;
+  socket.emit("inbox:subscribe", {
+    roomIds: contacts.map((contact) => privateRoomId(uid, contact.id)),
+  });
+}
+
+function previewMessage(message) {
+  if (message.type === "voice") return "Voice message";
+  if (message.type === "media") return message.mediaKind === "video" ? "Video" : "Photo";
+  return String(message.text || "").trim();
 }
 
 createRoot(document.getElementById("root")).render(<App />);

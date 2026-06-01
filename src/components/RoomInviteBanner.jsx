@@ -45,7 +45,7 @@ export default function RoomInviteBanner({ invite, onAccept, onDismiss }) {
       <div className="room-invite-copy">
         <span><Clock3 size={13} /> Room request</span>
         <strong>{invite.fromName} invited you</strong>
-        <small>Join room {invite.roomId}? {Math.ceil(remainingMs / 1000)}s</small>
+        <small>Join this chat? {Math.ceil(remainingMs / 1000)}s</small>
       </div>
       <button className="room-invite-accept" type="button" title="Accept room request" onClick={acceptInvite}>
         <Check size={19} />
