@@ -54,8 +54,9 @@ function roomUsers(roomId) {
   const room = rooms.get(roomId);
   if (!room) return [];
 
-  return Array.from(room.users.values()).map(({ id, name, color, photoUrl, entryAnimationId }) => ({
+  return Array.from(room.users.values()).map(({ id, clientId, name, color, photoUrl, entryAnimationId }) => ({
     id,
+    clientId,
     name,
     color,
     photoUrl,
@@ -160,11 +161,9 @@ io.on("connection", (socket) => {
 
     const room = getRoom(safeRoomId);
     cleanExpiredMessages(room);
-    const existingUser = room.users.get(safeClientId);
-    const isReconnect = Boolean(existingUser);
-
-    room.users.set(safeClientId, {
-      id: safeClientId,
+    room.users.set(socket.id, {
+      id: socket.id,
+      clientId: safeClientId,
       socketId: socket.id,
       name: safeName,
       color: safeColor,
@@ -172,27 +171,19 @@ io.on("connection", (socket) => {
       entryAnimationId: safeEntryAnimationId,
     });
 
-    if (existingUser?.socketId && existingUser.socketId !== socket.id) {
-      const oldSocket = io.sockets.sockets.get(existingUser.socketId);
-      oldSocket?.leave(safeRoomId);
-      oldSocket?.disconnect(true);
-    }
-
     socket.emit("room:history", {
       roomId: safeRoomId,
       messages: room.messages.slice(-100),
       users: roomUsers(safeRoomId),
     });
 
-    if (!isReconnect) {
-      socket.to(safeRoomId).emit("message:new", makeMessage({
-        roomId: safeRoomId,
-        sender: { id: "system", name: "World Chat", color: "#475569" },
-        text: `${safeName} joined the room.`,
-        system: true,
-        entryAnimationId: safeEntryAnimationId,
-      }));
-    }
+    socket.to(safeRoomId).emit("message:new", makeMessage({
+      roomId: safeRoomId,
+      sender: { id: "system", name: "World Chat", color: "#475569" },
+      text: `${safeName} joined the room.`,
+      system: true,
+      entryAnimationId: safeEntryAnimationId,
+    }));
 
     io.to(safeRoomId).emit("presence:update", roomUsers(safeRoomId));
   });
@@ -202,17 +193,16 @@ io.on("connection", (socket) => {
     const room = roomId ? rooms.get(roomId) : null;
     if (!room) return;
 
-    const clientId = socket.data.clientId || socket.id;
     const entryAnimationId = cleanEntryAnimationId(animationId);
-    const user = room.users.get(clientId);
+    const user = room.users.get(socket.id);
 
     socket.data.entryAnimationId = entryAnimationId;
     if (user) user.entryAnimationId = entryAnimationId;
 
     io.to(roomId).emit("presence:update", roomUsers(roomId));
     io.to(roomId).emit("entry-animation:show", {
-      id: `${Date.now()}-${clientId}`,
-      clientId,
+      id: `${Date.now()}-${socket.id}`,
+      clientId: socket.data.clientId || socket.id,
       name: socket.data.name || "Guest",
       animationId: entryAnimationId,
     });
@@ -223,8 +213,7 @@ io.on("connection", (socket) => {
     const room = roomId ? rooms.get(roomId) : null;
     if (!room) return;
 
-    const clientId = socket.data.clientId || socket.id;
-    const user = room.users.get(clientId);
+    const user = room.users.get(socket.id);
     if (!user) return;
 
     const safeName = String(name || user.name || "Guest").trim().slice(0, 28);
@@ -375,15 +364,10 @@ io.on("connection", (socket) => {
     const roomId = socket.data.roomId;
     if (!roomId) return;
 
-    const clientId = socket.data.clientId || socket.id;
     const room = rooms.get(roomId);
-    const user = room?.users.get(clientId);
+    const user = room?.users.get(socket.id);
 
-    if (user?.socketId !== socket.id) {
-      return;
-    }
-
-    room?.users.delete(clientId);
+    room?.users.delete(socket.id);
 
     if (room && room.users.size === 0 && room.messages.length === 0) {
       rooms.delete(roomId);
